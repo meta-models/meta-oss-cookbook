@@ -1,0 +1,62 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
+# Model and QLoRA: Unsloth's NF4 upload of Muse Glimmer, BF16 vision modules,
+# LoRA on the language model's attention and MLP projections only.
+model_name_or_path: unsloth/Muse-Glimmer-30B-unsloth-bnb-4bit
+# The official processor and chat template. The template in Unsloth's upload
+# adds "Reasoning strength: high." even when the system message sets it.
+tokenizer_name: meta-models/Muse-Glimmer-30B
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.0              # Unsloth's fast LoRA path is built for dropout 0
+finetune_vision_layers: false
+
+# Data: the first 2,048 training questions and 256 validation questions, as in
+# the Axolotl and TRL recipes. All 821 validation questions are the held-out
+# test.
+train_size: 2048
+validation_size: 256
+test_size: null
+
+# Required with UnslothVisionDataCollator: it renders, tokenizes and masks each
+# batch itself, so TRL must pass the raw rows through untouched.
+remove_unused_columns: false
+dataset_text_field: ""
+dataset_kwargs:
+  skip_prepare_dataset: true
+loss_type: nll                 # plain cross-entropy on the answer tokens
+max_length: 1024               # sequences are 446-527 tokens; nothing is truncated
+
+# Optimization: global batch 32 = 1 example x 32 accumulation steps on one GPU.
+num_train_epochs: 1
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 32
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine
+warmup_steps: 0.1              # a value below 1 is a fraction of training steps
+optim: adamw_8bit
+weight_decay: 0.0
+bf16: true
+
+# Validation loss every 16 optimizer steps, starting before the first update.
+eval_strategy: steps
+eval_steps: 16
+eval_on_start: true
+per_device_eval_batch_size: 4
+
+# Held-out generation: greedy, scored before and after training. The base
+# model reasons privately before answering, so it gets room to finish.
+max_new_tokens: 1024
+generation_batch_size: 64
+
+# Logging and output.
+output_dir: outputs/muse-glimmer-cosyn-unsloth
+run_name: muse-glimmer-cosyn-unsloth
+report_to: wandb
+logging_steps: 1
+save_strategy: "no"            # the final adapter is saved to output_dir
+seed: 42

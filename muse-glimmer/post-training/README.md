@@ -16,12 +16,12 @@ added without mixing their setup, configs, or results.
 |---|---|---|
 | Supervised fine-tuning | Axolotl | [`sft/axolotl/`](sft/axolotl/) |
 | Supervised fine-tuning | TRL | [`sft/trl/`](sft/trl/) |
+| Supervised fine-tuning | Unsloth | [`sft/unsloth/`](sft/unsloth/) |
 | Reinforcement learning | TitanRL | [`rl/titanrl/data-analyst/`](rl/titanrl/data-analyst/) |
 | Reinforcement learning | TRL | [`rl/trl/data-analyst/`](rl/trl/data-analyst/) |
 
-The objective indexes compare frameworks and reserve named locations for future
-implementations such as LLaMA-Factory or Unsloth. Framework directories own
-their configs, tests, assets, and measurements.
+The objective indexes compare frameworks. Framework directories own their
+configs, tests, assets, and measurements.
 
 ## Before you start: choose the training signal
 

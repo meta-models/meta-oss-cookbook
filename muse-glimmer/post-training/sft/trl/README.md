@@ -317,6 +317,7 @@ configuration.
 
 ## Next steps
 
+- [SFT with Unsloth](../unsloth/): the same task with QLoRA on one GPU.
 - [SFT with Axolotl](../axolotl/): the same data with bf16 LoRA and full-parameter FSDP2, plus text-only and multi-image data.
 - [Post-training overview](../../): when to use SFT and when to use RL.
 - [Agentic fundamentals](../../../agentic-fundamentals/): Muse Glimmer's message channels, including `to=self` and `to=user`.

@@ -12,7 +12,7 @@ Unlike the other servers here, ExecuTorch is ahead-of-time: the model is exporte
 | CUDA | Linux or Windows | `model.pte` plus `aoti_cuda_blob.ptd` |
 | MLX | macOS on Apple silicon | self-contained `model.pte` |
 
-Prebuilt exports are also published, under [different filenames](#alternative-download-a-prebuilt-export) — exporting a 30B model yourself is optional.
+Prebuilt exports are published at [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE), so exporting a 30B model yourself is optional. The runner is still built from source either way, and a downloaded export [names its artifacts differently](#alternative-download-a-prebuilt-export) from a local one.
 
 **CPU export is not supported.** For a CPU-only machine, use [`llama-cpp.md`](llama-cpp.md).
 

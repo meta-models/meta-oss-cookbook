@@ -80,6 +80,14 @@ cmake --build build -j"$(nproc)"             --target llama-server llama-cli lla
 
 If `ccache` errors during the build, add `-DGGML_CCACHE=OFF`.
 
+Confirm the checkout actually registers the architecture before you go looking for other reasons a load failed:
+
+```bash
+grep -c LLM_ARCH_MUSE_GLIMMER src/llama-arch.cpp   # expect >= 1
+```
+
+A `0` means the checkout predates Muse Glimmer support and will refuse these files.
+
 Run the commands below from the `llama.cpp` clone (or the unpacked release directory), with the `muse-glimmer/` download directory inside it, so both `./build/bin/` and `./muse-glimmer/` resolve. Otherwise pass absolute paths to `-m` and `--mmproj`.
 
 ## Serve
@@ -90,6 +98,7 @@ Muse Glimmer supports a native context of **131072**:
 ./build/bin/llama-server \
   -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
   --mmproj ./muse-glimmer/mmproj-kquant.gguf \
+  -a muse-glimmer \
   -ngl 99 -c 131072 -np 1 \
   --host 127.0.0.1 --port 8080 --api-key <your-key> \
   --jinja \
@@ -111,14 +120,15 @@ flag overrides this. Fix the metadata with the script in the llama.cpp clone
 | Flag | Why |
 |---|---|
 | `--jinja` | Applies the Muse Glimmer control-token template embedded in the GGUF. Without it, tool calling and reasoning separation break. |
+| `-a muse-glimmer` | The name the API answers to. Without it the alias is the checkpoint path, and the `"model": "muse-glimmer"` every example here sends will not match. |
 | `--chat-template-kwargs` | Sets `reasoning_strength` — see below. Template default is `high`. |
-| `-np N` | Concurrent slots, and **the context is divided N ways**: `-np 4` with `-c 131072` gives each slot 32768. Long-context agents want `-np 1`. |
+| `-np N` | Concurrent slots, and **the context is divided N ways**: `-np 4` with `-c 131072` gives each slot 32768. Long-context agents want `-np 1`. See [Context per slot](#context-per-slot). |
 | `-ngl 99` | Offload all layers to the GPU. |
 | `--api-key` | Guards inference endpoints only; `/health` and `/v1/models` still answer without it. |
 
 Thinking lands in `message.reasoning_content` and `message.content` stays clean — that is the server default, no flag needed. Pass `--reasoning-format none` to keep thinking inline in `message.content` instead.
 
-Drop `--mmproj` for text-only. For speculative decoding add `-md <draft>.gguf --spec-type draft-dflash -ngld 99 --spec-draft-n-max 4`.
+Drop `--mmproj` for text-only. For speculative decoding add `-md <draft>.gguf --spec-type draft-dflash -ngld 99 --spec-draft-n-max 4`. A `[spec] failed to measure draft model memory` warning at startup is harmless — the draft loads and serves normally after it.
 
 > [!NOTE]
 > Do not pass `--chat-template-file`. Upstream ships no Muse Glimmer template under `models/templates/`, and none is needed: `--jinja` uses the template embedded in the GGUF, which is byte-for-byte identical to the `chat_template.jinja` published with the safetensors checkpoint. llama.cpp selects the ATEM tool-call parser by detecting that template, so tool calling works from `--jinja` alone.
@@ -130,6 +140,18 @@ curl -s --noproxy '*' http://127.0.0.1:8080/v1/chat/completions \
   -H "Content-Type: application/json" -H "Authorization: Bearer <your-key>" \
   -d '{"model":"muse-glimmer","messages":[{"role":"user","content":"What is 17 * 23?"}],"temperature":0}'
 ```
+
+### Context per slot
+
+`n_ctx_slot` in the startup log, not `-c`, is what bounds a single generation. Getting this wrong fails quietly: a generation that runs out of room produces no answer and no error, so a batch job or an eval just reports a worse number and gives you nothing to debug.
+
+Muse Glimmer reasons at length, which makes the margin thinner than it looks — the published GGUF run notes for this model record a longest single generation of 31,044 tokens, against a 32,768-token slot. To keep concurrency without shrinking the slot, scale `-c` **with** `-np`:
+
+```bash
+  -c 524288 -np 4        # 131072 per slot, still 4-way concurrent
+```
+
+KV cache stays affordable at that size: GQA with 2 KV heads, and sliding-window attention on three of every four layers.
 
 ### Controlling reasoning length
 
@@ -159,6 +181,8 @@ Lower is not automatically worse: where the environment validates the answer or 
 > [!NOTE]
 > `reasoning_effort`, the OpenAI/vLLM spelling used in [`../recipes/reasoning-effort/`](../recipes/reasoning-effort/), is **not** implemented by llama.cpp. Use `chat_template_kwargs.reasoning_strength`.
 
+Reasoning cannot be turned off here. The template opens the thinking channel unconditionally, so `--reasoning off` and `"reasoning_effort": "none"` both leave the output unchanged. `reasoning_strength: low` is how you spend fewer thinking tokens; `--reasoning-budget N` is how you hard-cap them.
+
 ### Vision
 
 Send a remote URL, a `data:image/...;base64,...` URI, or a local path:
@@ -173,6 +197,32 @@ curl -s --noproxy '*' http://127.0.0.1:8080/v1/chat/completions \
 ```
 
 Images are billed as prompt tokens, scaling with resolution.
+
+## Command line, without the server
+
+The build produces two CLI binaries alongside `llama-server`. Text goes through `llama-cli`:
+
+```bash
+./build/bin/llama-cli \
+  -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
+  -ngl 99 -c 32768 --jinja -st
+```
+
+`-st` / `--single-turn` answers once and exits. Without it `llama-cli` stays interactive and waits on stdin, which reads as a hang.
+
+For images, use `llama-mtmd-cli` — that is the binary the model's GGUF run notes exercise, and the one this page's flags are known against:
+
+```bash
+./build/bin/llama-mtmd-cli \
+  -m       ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
+  --mmproj ./muse-glimmer/mmproj-kquant.gguf \
+  -ngl 99 -c 32768 --jinja \
+  --image photo.png -p "Describe this image."
+```
+
+`--jinja` is required here too; without it `llama-mtmd-cli` aborts with `this custom template is not supported, try using --jinja`.
+
+Both CLIs print the thinking trace inline with the answer, and neither separates the two. `--reasoning-format` only applies to the server's JSON response, so if you want `content` and `reasoning_content` apart, use `llama-server`.
 
 ## Verify tool calling
 

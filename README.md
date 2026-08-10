@@ -39,7 +39,7 @@ Each recipe follows the same contract so you always know what you're getting:
 | | |
 |---|---|
 | Family | Llama-derived dense decoder (Gemma2-style text stack with Muse Glimmer deltas). |
-| Size | ~29B dense decoder. |
+| Size | 30B dense decoder. |
 | Suggested GPU | Fits a single 24–32 GB GPU when quantized (Q4/INT4, ~16–17 GB); bf16 needs ~60 GB (an 80 GB card, or sharded across several GPUs). |
 | Context | 131072 tokens (128K). |
 | Modalities | Text and tool calling today. Vision (image, video) is a fast-follow. |

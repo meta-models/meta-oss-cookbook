@@ -7,10 +7,12 @@ Export Muse Glimmer ahead of time and serve it locally on CUDA or Apple silicon,
 
 Unlike the other servers here, ExecuTorch is ahead-of-time: the model is exported once into a `.pte` program for a specific backend, then served from that program.
 
-| Backend | Host | Exported artifacts |
+| Backend | Host | Artifacts written by a local export |
 |---|---|---|
 | CUDA | Linux or Windows | `model.pte` plus `aoti_cuda_blob.ptd` |
 | MLX | macOS on Apple silicon | self-contained `model.pte` |
+
+Prebuilt exports are also published, under [different filenames](#alternative-download-a-prebuilt-export) — exporting a 30B model yourself is optional.
 
 **CPU export is not supported.** For a CPU-only machine, use [`llama-cpp.md`](llama-cpp.md).
 
@@ -67,8 +69,47 @@ Add `--mmproj "$MMPROJ"` to either command for vision; that also writes `pos_emb
 
 A CUDA export autotunes Triton kernels against the GPU it runs on, so export on the same architecture you intend to serve from.
 
-> [!NOTE]
-> Prebuilt `.pte` artifacts are published at [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE), covering both quantizations across text / text+image, solo / DFlash, and Metal / CUDA. Downloading one skips this export step — **the runner build in step 3 is still required.** The [announcement above](https://pytorch.org/blog/fast-ondevice-agentic-ai-with-executorch/) prefers downloading over exporting, but the filenames in its example commands are not the ones in the published bundles: each bundle directory names both its `.pte` and its `.ptd` after itself, so `--model-path` and `--data-path` below both need adjusting to match. This page stays on the export path, where the filenames are the ones shown.
+#### Alternative: download a prebuilt export
+
+[`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE) publishes 16 ready-made exports, which skips step 2 entirely. **Step 3 still applies** — a `.pte` is a model program, not a runtime, so you still build `muse_glimmer_worker` from source.
+
+> [!WARNING]
+> **That repository is 372 GB.** One export is 18–31 GB, so always download a single directory with `--include` rather than the whole repo.
+
+Directories are named `muse-glimmer-<quantization>-128K-<modality>-<decoding>-<backend>`, and all 16 combinations of the four axes exist:
+
+- **Quantization** — `k-quant-17G` targets 24 GB of VRAM, `k-quant-dynamic` targets 32 GB with less degradation (the [model card](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE) quantifies the tradeoff).
+- **Modality** — `text`, or `text-image` for vision.
+- **Decoding** — `solo`, or `dflash` for speculative decoding.
+- **Backend** — `metal` for Apple silicon, `sm80+ptx` for CUDA on SM80 and newer.
+
+Context length is `128K` for every variant. Sizes, by directory:
+
+| Quantization | Modality | Decoding | `…-metal` | `…-sm80+ptx` |
+|---|---|---|---|---|
+| `k-quant-17G` | `text` | `solo` | 17.9 GB | 19.8 GB |
+| `k-quant-17G` | `text` | `dflash` | 19.6 GB | 27.2 GB |
+| `k-quant-17G` | `text-image` | `solo` | 19.4 GB | 21.2 GB |
+| `k-quant-17G` | `text-image` | `dflash` | 21.1 GB | 28.6 GB |
+| `k-quant-dynamic` | `text` | `solo` | 20.7 GB | 22.6 GB |
+| `k-quant-dynamic` | `text` | `dflash` | 22.4 GB | 30.0 GB |
+| `k-quant-dynamic` | `text-image` | `solo` | 22.2 GB | 24.0 GB |
+| `k-quant-dynamic` | `text-image` | `dflash` | 23.8 GB | 31.5 GB |
+
+Each directory holds `<directory-name>.pte`; `sm80+ptx` variants add `<directory-name>.ptd`, and `text-image` variants add `pos_embed.bin`. On CUDA the weights live in the `.ptd` and the `.pte` is only tens of megabytes, so both files are required. The repository root carries the tokenizer metadata — `tokenizer.json`, `tokenizer_config.json` and `chat_template.jinja` — so this one repository covers everything the server needs; the `assets/hf` download in step 1 is for the export path.
+
+```bash
+EXPORT_DIR=muse-glimmer-k-quant-17G-128K-text-solo-sm80+ptx
+
+hf download meta-models/Muse-Glimmer-30B-ExecuTorch-PTE \
+  --include "$EXPORT_DIR/*" tokenizer.json tokenizer_config.json chat_template.jinja \
+  --local-dir exports
+```
+
+Upstream documents the same `--include` approach in [Prebuilt PTE artifacts](https://github.com/pytorch/executorch/blob/main/examples/models/muse-glimmer/README.md#prebuilt-pte-artifacts), though its example still shows the older underscored directory names.
+
+> [!IMPORTANT]
+> A prebuilt directory names its artifacts after itself, so **both** `--model-path` and `--data-path` differ from the export path below — there is no `model.pte` and no `aoti_cuda_blob.ptd` in a download. Upstream's serve snippet and the [announcement](https://pytorch.org/blog/fast-ondevice-agentic-ai-with-executorch/) quickstart both show the export filenames, which fail against downloaded artifacts.
 
 ### 3. Build the runner
 
@@ -93,6 +134,17 @@ python -m executorch.examples.models.muse_glimmer.serving.serve \
 ```
 
 On MLX, drop `--data-path`. For DFlash, replace `exports/solo` with `exports/dflash` in both artifact paths — the server detects the exported method contract. For vision, add `--pos-embed-path <export-dir>/pos_embed.bin`.
+
+From a [prebuilt export](#alternative-download-a-prebuilt-export), substitute the two artifact flags — the rest of the command is unchanged:
+
+```bash
+  --model-path "exports/$EXPORT_DIR/$EXPORT_DIR.pte" \
+  --data-path "exports/$EXPORT_DIR/$EXPORT_DIR.ptd" \
+  --tokenizer-path exports/tokenizer.json \
+  --hf-tokenizer exports \
+```
+
+Drop `--data-path` for a `-metal` variant, since it has no `.ptd`. Add `--pos-embed-path "exports/$EXPORT_DIR/pos_embed.bin"` for a `text-image` variant. A `-dflash` variant needs no extra flag.
 
 ```bash
 curl http://127.0.0.1:8000/v1/chat/completions \
@@ -122,6 +174,7 @@ Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<
 | Worker fails to load the method | Runner built without the quantized / custom-op kernels | Rebuild with the model's CMake workflow preset rather than a plain ExecuTorch build. |
 | Tool calls arrive as plain text | Server started without `--tool-parser atem` | Re-serve with the flag. The default is `none`, which passes model output through unparsed. |
 | `400` on a request that works elsewhere | Unsupported OpenAI parameter | See the rejected parameters above. |
+| Artifact not found on a downloaded export | Export filenames used against a prebuilt directory | A download has no `model.pte` or `aoti_cuda_blob.ptd`; both artifacts are named after their directory. |
 
 ## Next steps
 

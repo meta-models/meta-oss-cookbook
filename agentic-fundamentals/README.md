@@ -165,7 +165,7 @@ To swap the backend for lower latency, point the same loop at a vLLM endpoint. T
 |---|---|---|
 | `TemplateError: arguments ... must be a dict` | Passed `arguments` as a JSON string | Pass the parsed dict into `apply_chat_template` (the loop does this). |
 | Model never stops or repeats | Wrong stop tokens | Use `eos_token_id=[<\|eot\|>, <\|end_of_text\|>]`; never `<\|eom\|>`. |
-| Tool calls arrive as plain text | Not parsing the tool block | Use `MuseGlimmerATEMParser` (or vLLM `--tool-call-parser muse-glimmer`). |
+| Tool calls arrive as plain text | Not parsing the tool block | Use `MuseGlimmerATEMParser` (or vLLM `--tool-call-parser muse_glimmer`). |
 | An echoed example call gets executed | Missing channel scoping | Strip `to=self` / `to=user` spans before scanning invokes (the parser does this). |
 | Agent stops before writing the report | Hit `--max-steps` | Raise `--max-steps`; one read per file adds up on large projects. |
 | OOM loading bf16 | ~60 GB doesn't fit | Use `device_map="auto"` across GPUs, or the vLLM path with tensor parallelism. |

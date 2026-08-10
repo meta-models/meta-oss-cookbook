@@ -43,7 +43,7 @@ Numbers vary by run and by problem — the point is the shape. Reasoning tokens 
 
 Two things worth knowing:
 
-- **`reasoning_content` is a separate field.** Muse Glimmer reasons in a `to=self` channel; vLLM's `--reasoning-parser muse-glimmer` routes it to `message.reasoning_content` and keeps `message.content` clean. Without that flag, reasoning leaks into your answer.
+- **`reasoning_content` is a separate field.** Muse Glimmer reasons in a `to=self` channel; vLLM's `--reasoning-parser muse_glimmer` routes it to `message.reasoning_content` and keeps `message.content` clean. Without that flag, reasoning leaks into your answer.
 - **Reasoning tokens are billed as completion tokens.** They count against `max_tokens`. An `xhigh` run that hits the ceiling mid-thought returns an empty answer — the most common way this bites.
 
 ## Make it yours
@@ -58,7 +58,7 @@ Two things worth knowing:
 | Symptom | Cause | Fix |
 |---|---|---|
 | Empty `answer`, high reasoning tokens | Hit `max_tokens` mid-thought | Raise `max_tokens`, or lower effort. |
-| Reasoning text appears in `content` | Reasoning parser not enabled | Serve with `--reasoning-parser muse-glimmer`. |
+| Reasoning text appears in `content` | Reasoning parser not enabled | Serve with `--reasoning-parser muse_glimmer`. |
 | `reasoning_tokens` is `n/a` | Server didn't report the breakdown | Cosmetic — `completion_tokens` still tells you the cost. |
 | Every setting is wrong | Problem too hard, or ceiling too low | Raise `max_tokens` first; then reconsider the task. |
 | `Connection refused` | Nothing served on the port | Start vLLM ([`../../inference-server/vllm.md`](../../inference-server/vllm.md)). |

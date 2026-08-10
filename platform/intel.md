@@ -277,7 +277,7 @@ hf download meta-models/Muse-Glimmer-30B --local-dir ./muse-glimmer-bf16
 
 ```bash
 vllm serve ./muse-glimmer-bf16 \
-    -tp <TP_SIZE> \
+    -tp "<TP_SIZE>" \
     --dtype=bfloat16 \
     --trust-remote-code --enable-auto-tool-choice \
     --tool-call-parser muse_glimmer \

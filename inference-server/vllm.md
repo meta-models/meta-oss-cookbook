@@ -16,9 +16,9 @@ What vLLM provides for Muse Glimmer:
 | Area | File | Flag |
 |---|---|---|
 | Text model | `vllm/model_executor/models/muse_glimmer.py` | (auto) |
-| Tool-call parser | `vllm/tool_parsers/muse_glimmer_tool_parser.py` | `--tool-call-parser muse-glimmer` |
-| Reasoning parser | `vllm/reasoning/muse_glimmer_reasoning_parser.py` | `--reasoning-parser muse-glimmer` |
-| Chat template | `examples/tool_chat_template_muse_glimmer.jinja` | `--chat-template …` |
+| Tool-call parser | `vllm/tool_parsers/muse_glimmer_tool_parser.py` | `--tool-call-parser muse_glimmer` |
+| Reasoning parser | `vllm/reasoning/muse_glimmer_reasoning_parser.py` | `--reasoning-parser muse_glimmer` |
+| Chat template | ships with the checkpoint (`chat_template.jinja`) | (auto) |
 | Config (native) | `vllm/transformers_utils/configs/muse_glimmer.py` | (auto: `muse-glimmer` / `muse_glimmer_text` / `muse_glimmer_vision`) |
 
 Vision (multimodal) is a fast-follow. Text and tool calling work today.
@@ -32,9 +32,8 @@ python -m vllm.entrypoints.openai.api_server \
   --model meta-models/Muse-Glimmer-30B \
   --served-model-name muse-glimmer \
   --enable-auto-tool-choice \
-  --tool-call-parser muse-glimmer \
-  --reasoning-parser muse-glimmer \
-  --chat-template examples/tool_chat_template_muse_glimmer.jinja \
+  --tool-call-parser muse_glimmer \
+  --reasoning-parser muse_glimmer \
   --generation-config auto
 ```
 
@@ -44,8 +43,8 @@ Single 80 GB card, tighter memory:
 python -m vllm.entrypoints.openai.api_server \
   --model meta-models/Muse-Glimmer-30B --served-model-name muse-glimmer \
   --gpu-memory-utilization 0.9 --max-model-len 8300 --enforce-eager \
-  --enable-auto-tool-choice --tool-call-parser muse-glimmer --reasoning-parser muse-glimmer \
-  --chat-template examples/tool_chat_template_muse_glimmer.jinja --generation-config auto
+  --enable-auto-tool-choice --tool-call-parser muse_glimmer --reasoning-parser muse_glimmer \
+  --generation-config auto
 ```
 
 Multi-GPU with tensor parallelism (bf16 needs ~60 GB, so use enough cards to cover it — e.g. 2× 40 GB or 4× 24 GB):
@@ -54,8 +53,8 @@ Multi-GPU with tensor parallelism (bf16 needs ~60 GB, so use enough cards to cov
 python -m vllm.entrypoints.openai.api_server \
   --model meta-models/Muse-Glimmer-30B --served-model-name muse-glimmer \
   --tensor-parallel-size 2 \
-  --enable-auto-tool-choice --tool-call-parser muse-glimmer --reasoning-parser muse-glimmer \
-  --chat-template examples/tool_chat_template_muse_glimmer.jinja --generation-config auto
+  --enable-auto-tool-choice --tool-call-parser muse_glimmer --reasoning-parser muse_glimmer \
+  --generation-config auto
 ```
 
 ## Verify tool calling
@@ -90,9 +89,9 @@ Token IDs above come from the converted checkpoint. Confirm against your checkpo
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Tool calls returned as plain text | Parser or template missing | Pass both `--tool-call-parser muse-glimmer` and the Muse Glimmer chat template. |
+| Tool calls returned as plain text | Parser or template missing | Pass `--tool-call-parser muse_glimmer`. The chat template comes from the checkpoint. |
 | Model runs forever | Wrong stop tokens | See above — never stop on `<\|eom\|>`. |
-| `to=self` reasoning leaking into content | No reasoning parser | Use `--reasoning-parser muse-glimmer`; it routes reasoning to `reasoning_content`. |
+| `to=self` reasoning leaking into content | No reasoning parser | Use `--reasoning-parser muse_glimmer`; it routes reasoning to `reasoning_content`. |
 | OOM | bf16 needs ~60 GB | Lower `--max-model-len`, add `--tensor-parallel-size`, or use a quant. |
 
 ## Next steps

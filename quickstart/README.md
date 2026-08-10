@@ -36,9 +36,8 @@ python -m vllm.entrypoints.openai.api_server \
   --model meta-models/Muse-Glimmer-30B \
   --served-model-name muse-glimmer \
   --enable-auto-tool-choice \
-  --tool-call-parser muse-glimmer \
-  --reasoning-parser muse-glimmer \
-  --chat-template examples/tool_chat_template_muse_glimmer.jinja \
+  --tool-call-parser muse_glimmer \
+  --reasoning-parser muse_glimmer \
   --generation-config auto
 ```
 
@@ -132,7 +131,7 @@ For tool calling, use the vLLM path above: Ollama's default templates may not em
 | Symptom | Cause | Fix |
 |---|---|---|
 | Model never stops generating | Missing or wrong stop tokens | Set `eos_token_id=[<\|end_of_text\|>, <\|eot\|>]`. Don't include `<\|eom\|>`. |
-| Tool calls come back as plain text | Server isn't parsing the tool block | Use vLLM with `--tool-call-parser muse-glimmer`, or parse it yourself ([agentic-fundamentals](../agentic-fundamentals/)). |
+| Tool calls come back as plain text | Server isn't parsing the tool block | Use vLLM with `--tool-call-parser muse_glimmer`, or parse it yourself ([agentic-fundamentals](../agentic-fundamentals/)). |
 | OOM on a 24 GB card | Running bf16 (~60 GB) | Add tensor parallelism, or use a quantized build (Ollama, LM Studio). |
 | `trust_remote_code` prompt | Checkpoint ships custom modeling code | Use the native path: transformers ≥ 5.15, or serve with vLLM. |
 

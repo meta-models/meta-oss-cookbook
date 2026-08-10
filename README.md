@@ -49,7 +49,7 @@ Each recipe follows the same contract so you always know what you're getting:
 
 ## Status
 
-This cookbook is under active construction. Sections land incrementally, and each folder's README states where it stands. Unresolved decisions are tracked in [`OPEN_QUESTIONS.md`](OPEN_QUESTIONS.md).
+This cookbook is under active construction. Sections land incrementally, and each folder's README states where it stands.
 
 Contributions welcome. Every recipe follows the shared template in [`assets/RECIPE_TEMPLATE.md`](assets/RECIPE_TEMPLATE.md).
 

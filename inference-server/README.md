@@ -7,10 +7,18 @@ One page per server. Each is a deeper guide than the [quickstart](../quickstart/
 | vLLM | [`vllm.md`](vllm.md) | Verified (native `MuseGlimmerForCausalLM`) |
 | Ollama | [`ollama.md`](ollama.md) | Pending verified GGUF |
 | LM Studio | [`lm-studio.md`](lm-studio.md) | Partner-authored (LM Studio Bionic) |
-| SGLang | [`sglang.md`](sglang.md) | Pending |
-| llama.cpp | [`llama-cpp.md`](llama-cpp.md) | Verified (GGUF: text, vision, tool calling) |
-| Unsloth | [`unsloth.md`](unsloth.md) | Pending verified GGUF |
+| SGLang | [`sglang.md`](sglang.md) | Documented upstream (pre-release branch) |
+| llama.cpp | [`llama-cpp.md`](llama-cpp.md) | Verified on a `master` build (GGUF: text, vision, tool calling) |
+| Unsloth | [`unsloth.md`](unsloth.md) | Partner-authored (GGUF published) |
 | ExecuTorch | [`executorch.md`](executorch.md) | Supported upstream (CUDA / MLX; text, vision, tool calling, DFlash) |
+
+**Three of these need a pre-release build.** Upstream support for Muse Glimmer has not reached a tagged release in vLLM, llama.cpp, or SGLang:
+
+- **vLLM** — an open PR (#51655); the Docker image is the supported path.
+- **llama.cpp** — merged to `master`, not in any tag. The newest tag (`b10343`) does not register the architecture, so prebuilt binaries fail.
+- **SGLang** — an unreleased branch (PR #34262).
+
+Each page gives the exact build or image to use.
 
 Most pages follow the same section order — **Install → Serve → Verify tool calling → Stop tokens → Next steps** — so you can switch between servers and compare the same step side by side. Some add a Troubleshooting section before Next steps.
 

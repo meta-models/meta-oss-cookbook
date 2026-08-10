@@ -3,7 +3,7 @@
 Portable inference across CPU, Metal, CUDA, ROCm and Vulkan — the practical way to run Muse Glimmer on a single machine.
 
 > [!NOTE]
-> Status: verified on Apple silicon (Metal) against upstream llama.cpp at commit `dd1ea52` — text, vision and tool calling, against ready-to-serve GGUF checkpoints. There is no conversion or quantization step.
+> Status: verified on Apple silicon (Metal) against upstream llama.cpp release `b10355` (commit `dd1ea52`) — text, vision and tool calling, against ready-to-serve GGUF checkpoints. There is no conversion or quantization step.
 
 Upstream llama.cpp supports Muse Glimmer. Commit [`62bf73d25`](https://github.com/ggml-org/llama.cpp/commit/62bf73d25) ("model: Muse Glimmer Support", PR #26841) adds the `muse-glimmer` architecture, the vision projector, the ATEM tool-call parser and DFlash speculative decoding. No fork is needed.
 
@@ -29,15 +29,29 @@ hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir ./muse-glimmer \
 
 Full-precision weights are not published as GGUF. For bf16, use the safetensors checkpoint at [`meta-models/Muse-Glimmer-30B`](https://huggingface.co/meta-models/Muse-Glimmer-30B) with [`vllm.md`](vllm.md).
 
-### 2. Build
+### 2. Get llama.cpp
+
+Muse Glimmer support first shipped in release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353). **Use `b10353` or newer** — a prebuilt binary and a source build both work.
+
+> [!IMPORTANT]
+> `b10344` and older do not register the `muse-glimmer` architecture and refuse to load these checkpoints:
+>
+> ```
+> llama_model_load: error loading model: unknown model architecture: 'muse-glimmer'
+> ```
+>
+> `llama-server --version` prints the build number to check against: `version: 10353 (...)` or higher.
+
+The [releases page](https://github.com/ggml-org/llama.cpp/releases) publishes prebuilt binaries for macOS arm64 (Metal), Linux (CPU, CUDA, ROCm, Vulkan, SYCL) and Windows. If you take one, unpack it and skip to [Serve](#serve) — read `./build/bin/` in the commands below as the directory you unpacked.
+
+To build from source instead — `master` is well past the floor:
 
 ```bash
 git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 ```
 
-> [!IMPORTANT]
-> Build from `master`. Muse Glimmer support landed on 2026-08-10 and is not in any tagged release yet — the newest tag at the time of writing, `b10343`, is six commits behind `62bf73d25` and does not register the `muse-glimmer` architecture, so the prebuilt release binaries cannot load these checkpoints.
+Add `--branch b10353` to pin to the floor, or any later tag to pin to a known build.
 
 Pick your backend:
 
@@ -66,7 +80,7 @@ cmake --build build -j"$(nproc)"             --target llama-server llama-cli lla
 
 If `ccache` errors during the build, add `-DGGML_CCACHE=OFF`.
 
-Run the commands below from the `llama.cpp` clone, with the `muse-glimmer/` download directory inside it, so both `./build/bin/` and `./muse-glimmer/` resolve. Otherwise pass absolute paths to `-m` and `--mmproj`.
+Run the commands below from the `llama.cpp` clone (or the unpacked release directory), with the `muse-glimmer/` download directory inside it, so both `./build/bin/` and `./muse-glimmer/` resolve. Otherwise pass absolute paths to `-m` and `--mmproj`.
 
 ## Serve
 

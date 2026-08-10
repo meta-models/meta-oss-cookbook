@@ -29,7 +29,7 @@ docker pull lmsysorg/sglang:dev-muse-glimmer
 Multi-arch — the same tag resolves to amd64 or arm64, so it also covers aarch64 boxes like DGX Spark. Verified present on Docker Hub on 2026-08-10, alongside explicit `dev-muse-glimmer-amd64` and `dev-muse-glimmer-arm64` tags if you need to pin one.
 
 > [!NOTE]
-> SGLang images are published under `lmsysorg/sglang`. `vllm/vllm-openai:muse-glimmer` is a real image but it is **vLLM's** server, not SGLang's — see [`vllm.md`](vllm.md). The two get confused because the same configurator page offers both.
+> SGLang images are published under `lmsysorg/sglang`. `vllm/vllm-openai:muse-glimmer` is a real image but it is **vLLM's** server, not SGLang's — it belongs with [`vllm.md`](vllm.md), which is where this cookbook uses it.
 
 Both are from the official page's *Install SGLang* panel. See the [upstream install guide](https://docs.sglang.io/docs/get-started/install) for platform variations.
 

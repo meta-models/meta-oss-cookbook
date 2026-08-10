@@ -78,7 +78,7 @@ hf download meta-models/Muse-Glimmer-30B --local-dir ./muse-glimmer-bf16
 ZE_AFFINITY_MASK=0,1  \
 python -m vllm.entrypoints.openai.api_server \
   --model ./muse-glimmer-bf16 \
-  --reasoning-parser muse-glimmer \
+  --reasoning-parser muse_glimmer \
   --enforce-eager \
   --tensor-parallel-size 2
 ```
@@ -276,12 +276,12 @@ hf download meta-models/Muse-Glimmer-30B --local-dir ./muse-glimmer-bf16
 ```
 
 ```bash
-vllm serve muse-glimmer-bf16 \
-    -tp $<TP_SIZE> \
+vllm serve ./muse-glimmer-bf16 \
+    -tp <TP_SIZE> \
     --dtype=bfloat16 \
     --trust-remote-code --enable-auto-tool-choice \
-    --tool-call-parser muse-glimmer \
-    --reasoning-parser muse-glimmer \
+    --tool-call-parser muse_glimmer \
+    --reasoning-parser muse_glimmer \
     --generation-config auto
 ```
 

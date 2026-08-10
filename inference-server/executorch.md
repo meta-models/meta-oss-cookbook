@@ -66,7 +66,7 @@ python -m executorch.examples.models.muse_glimmer.export.export_dflash \
 Add `--mmproj "$MMPROJ"` to either command for vision; that also writes `pos_embed.bin` beside `model.pte`.
 
 > [!NOTE]
-> [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE) publishes prebuilt `.pte` artifacts covering both quantizations, text and text+image, solo and DFlash, for CUDA and Metal. It skips this export step but not the runner build below, and upstream does not yet document serving those files, so this page stays on the export path.
+> Prebuilt `.pte` artifacts are published at [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE), covering both quantizations across text / text+image, solo / DFlash, and Metal / CUDA. Downloading one skips this export step — **the runner build in step 3 is still required.** Their CUDA blob is named after its own directory rather than `aoti_cuda_blob.ptd`, so `--data-path` below needs adjusting to match. Upstream does not document serving these files yet, so this page stays on the export path.
 
 ### 3. Build the runner
 

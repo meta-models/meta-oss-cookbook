@@ -16,7 +16,7 @@ Intel has a broad AI portfolio, from consumer laptops powered by Intel® Core™
 |---|---|---|---|---|
 | Arc Pro GPU (server) | server | Arc Pro B70 x 2 | 32 GB LPDDR5 per accelerator | bf16 |
 | Arc Pro GPU (consumer) | consumer | Arc Pro B Series | 32 GB GDDR6 | bf16, int4 |
-| Xeon 6 6980P | server | N/A |  | bf16 |
+| Xeon 6 6980P | server | N/A | depends on DDR5 mounted, suggest to > 512 GB | bf16 |
 | Intel Core Ultra Series 2 and 3 | consumer | iGPU | 32GB+ | q4_k_m, int4 |
 
 <!-- Class is one of: `consumer`, `workstation`, `server`, `edge`, `cloud-instance`.
@@ -84,6 +84,8 @@ python -m vllm.entrypoints.openai.api_server \
 ```
 
 Tensor parallelism across >= 2 accelerators (e.g. `--tensor-parallel-size 4`) also works.
+
+Intel's own day-0 instructions for this path — including the tool-calling flags and a Hugging Face Transformers alternative — are in [Day-0 Muse Glimmer Support on Intel Platforms with vLLM and Hugging Face](https://huggingface.co/blog/MatrixYao/muse-glimmer-day0), which Intel reports validating on Arc Pro B70 and Arc Pro B60.
 
 **Supported precisions**
 
@@ -286,6 +288,8 @@ vllm serve muse-glimmer-bf16 \
 ```
 
 Confirm the deploy with the tool-calling check in [`../inference-server/vllm.md`](../inference-server/vllm.md) — Muse Glimmer is an agentic model, so "it generates text" isn't a working deploy.
+
+Intel's own day-0 instructions for this path are in [Day-0 Muse Glimmer Support on Intel Platforms with vLLM and Hugging Face](https://huggingface.co/blog/MatrixYao/muse-glimmer-day0), which Intel reports validating on Xeon 6. It also covers the Hugging Face Transformers route on Xeon, including DFlash speculative decoding against `meta-models/Muse-Glimmer-30B-assistant`.
 
 > [!WARNING]
 > Stop tokens: `eos_token_id = [<\|end_of_text\|>, <\|eot\|>]`. Never stop on `<\|eom\|>` — it marks end-of-*message*, the turn continues, and stopping there reduces parallel tool calling to near zero. Confirm your runtime doesn't override this. Details: [`../inference-server/README.md`](../inference-server/README.md).

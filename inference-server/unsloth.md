@@ -5,7 +5,7 @@ Run, fine-tune, and serve Muse Glimmer locally via a GUI interface.
 Unsloth is an open-source desktop app for running and training Muse Glimmer on local hardware. The app enables OpenAI-compatible API endpoints, agent connections, tool calling, web search, remote access, model exporting, and more.
 
 > [!NOTE]
-> Status: pending a Muse Glimmer-specific Unsloth checkpoint, GGUF build, and verified tool-calling run. The Unsloth workflows below are current, but replace the model placeholders only with the official Meta or Unsloth release artifacts.
+> Status: Unsloth's Muse Glimmer GGUF build is published at [`unsloth/Muse-Glimmer-30B-GGUF`](https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF), and the Unsloth workflows below are current. Still pending: a verified tool-calling run. Use the official Meta or Unsloth release artifacts rather than a third-party repack.
 
 ## Install
 
@@ -19,9 +19,7 @@ Unsloth is an open-source desktop app for running and training Muse Glimmer on l
 
 ### Manual installation
 
-Use the platform download links at the beginning of this page, then install and launch the app.
-
-You can also install from a terminal. On macOS, Linux, or WSL:
+Install from a terminal instead of the platform installers. On macOS, Linux, or WSL:
 
 ```bash
 curl -fsSL https://unsloth.ai/install.sh | sh
@@ -83,12 +81,51 @@ To connect Muse Glimmer to an agentic tool, load Muse Glimmer in Unsloth and run
 unsloth start claude
 ```
 
-Change ```claude``` to the [supported agents](https://unsloth.ai/docs/integrations/unsloth-start).
+Change `claude` to any of the [supported agents](https://unsloth.ai/docs/integrations/unsloth-start).
 
 ### Unsloth CLI
 
-Once official Muse Glimmer GGUF artifacts are published:
+Unsloth publishes Muse Glimmer GGUFs at [`unsloth/Muse-Glimmer-30B-GGUF`](https://huggingface.co/unsloth/Muse-Glimmer-30B-GGUF) — Dynamic quants from `UD-IQ2_XXS` through `UD-Q8_K_XL`, plus BF16 and the `mmproj` vision projectors.
+
+You can select the model while launching an agent. The `:` suffix picks the quant:
 
 ```bash
-unsloth run --model unsloth/muse-glimmer-30b-GGUF:UD-Q4_K_XL
+unsloth start claude \
+  --model unsloth/Muse-Glimmer-30B-GGUF:UD-Q4_K_XL \
+  --context-length 131072
 ```
+
+`--gguf-variant UD-Q4_K_XL` does the same job and overrides the suffix. If Unsloth Studio isn't already running, passing `--model` starts a temporary server that stops when the agent exits.
+
+## Verify tool calling
+
+Not yet verified against Muse Glimmer. The endpoint takes OpenAI-style `tools` today, so the check is the same one the other pages run. Use the `id` from `/v1/models` as the model value:
+
+```bash
+curl http://localhost:8888/v1/chat/completions \
+  -H "Authorization: Bearer $UNSLOTH_STUDIO_AUTH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model":"default",
+    "messages":[{"role":"user","content":"What is the weather in Paris in celsius? Use the tool."}],
+    "tools":[{"type":"function","function":{
+      "name":"get_weather","description":"Get current weather for a city.",
+      "parameters":{"type":"object","properties":{
+        "city":{"type":"string"},"units":{"type":"string","enum":["celsius","fahrenheit"]}},
+        "required":["city"]}}}],
+    "tool_choice":"auto"}'
+```
+
+What you want back is a `tool_calls` array, not the call rendered as plain text. Until that run is recorded here, point agentic recipes at vLLM ([`vllm.md`](vllm.md)).
+
+## Stop tokens
+
+Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. See [`README.md`](README.md#get-stop-tokens-right).
+
+Unsloth sets inference parameters from the model on load, and the chat template and other per-model settings are editable in the app. The Unsloth docs don't document a stop-token override specifically, and which stop tokens Unsloth applies to Muse Glimmer has not been verified here — confirm it before running long agentic turns, since stopping on `<|eom|>` collapses parallel tool calling.
+
+## Next steps
+
+- Train a Muse Glimmer adapter, then serve it: [Fine-tuning](#fine-tuning) above
+- Learn the loop this endpoint drives: [`../agentic-fundamentals/`](../agentic-fundamentals/)
+- Serve with the verified path instead: [`vllm.md`](vllm.md)

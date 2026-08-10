@@ -43,7 +43,7 @@ Numbers vary by run and by problem — the point is the shape. Reasoning tokens 
 
 Two things worth knowing:
 
-- **`reasoning_content` is a separate field.** Muse Glimmer reasons in a `to=self` channel; vLLM's `--reasoning-parser muse_glimmer` routes it to `message.reasoning_content` and keeps `message.content` clean. Without that flag, reasoning leaks into your answer.
+- **`reasoning` is a separate field.** Muse Glimmer reasons in a `to=self` channel; vLLM's `--reasoning-parser muse_glimmer` routes it to `message.reasoning` (`delta.reasoning` when streaming) and keeps `message.content` clean. Without that flag, reasoning leaks into your answer. Note this model uses `reasoning`, not the `reasoning_content` some other models emit.
 - **Reasoning tokens are billed as completion tokens.** They count against `max_tokens`. An `xhigh` run that hits the ceiling mid-thought returns an empty answer — the most common way this bites.
 
 ## Make it yours

@@ -1,5 +1,7 @@
 # Unsloth
 
+![Muse Glimmer 30B](../assets/muse-glimmer-30b-wordmark.png)
+
 Run, fine-tune, and serve Muse Glimmer locally via a GUI interface.
 
 Unsloth is an open-source desktop app for running and training Muse Glimmer on local hardware. The app enables OpenAI-compatible API endpoints, agent connections, tool calling, web search, remote access, model exporting, and more.

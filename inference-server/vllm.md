@@ -61,7 +61,9 @@ python -m vllm.entrypoints.openai.api_server \
 ## Verify tool calling
 
 ```bash
-curl http://localhost:8000/v1/chat/completions -d '{
+curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
   "model": "muse-glimmer",
   "messages": [{"role":"user","content":"What is the weather in Paris in celsius? Use the tool."}],
   "tools": [{"type":"function","function":{

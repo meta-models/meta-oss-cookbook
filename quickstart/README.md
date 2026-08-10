@@ -45,7 +45,9 @@ python -m vllm.entrypoints.openai.api_server \
 Test tool calling against the OpenAI-compatible endpoint:
 
 ```bash
-curl http://localhost:8000/v1/chat/completions -d '{
+curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
   "model": "muse-glimmer",
   "messages": [{"role": "user", "content": "What is the weather in Paris in celsius? Use the tool."}],
   "tools": [{"type":"function","function":{
@@ -106,7 +108,9 @@ ollama run muse-glimmer
 Ollama exposes an OpenAI-compatible endpoint on `:11434`. Call it from another terminal:
 
 ```bash
-curl http://localhost:11434/v1/chat/completions -d '{
+curl http://localhost:11434/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
   "model": "muse-glimmer",
   "messages": [{"role": "user", "content": "In one sentence, what is Muse Glimmer good at?"}]
 }'

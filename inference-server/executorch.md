@@ -3,7 +3,7 @@
 Export Muse Glimmer ahead of time and serve it locally on CUDA or Apple silicon, with vision, tool calling, and DFlash speculative decoding.
 
 > [!NOTE]
-> Status: supported upstream — text, vision, tool calling and DFlash. Not re-run for this cookbook, so no VRAM or throughput numbers are published here. Upstream reference: [`examples/models/muse-glimmer`](https://github.com/pytorch/executorch/tree/main/examples/models/muse-glimmer).
+> Status: supported upstream — text, vision, tool calling and DFlash. Not re-run for this cookbook, so no VRAM or throughput numbers are published here; the upstream announcement, [Fast on-device agentic AI with ExecuTorch](https://pytorch.org/blog/fast-ondevice-agentic-ai-with-executorch/), explains why this model is exported rather than reimplemented per backend, and publishes PyTorch's own measurements on Apple silicon and NVIDIA. Upstream reference: [`examples/models/muse-glimmer`](https://github.com/pytorch/executorch/tree/main/examples/models/muse-glimmer).
 
 Unlike the other servers here, ExecuTorch is ahead-of-time: the model is exported once into a `.pte` program for a specific backend, then served from that program.
 
@@ -65,8 +65,10 @@ python -m executorch.examples.models.muse_glimmer.export.export_dflash \
 
 Add `--mmproj "$MMPROJ"` to either command for vision; that also writes `pos_embed.bin` beside `model.pte`.
 
+A CUDA export autotunes Triton kernels against the GPU it runs on, so export on the same architecture you intend to serve from.
+
 > [!NOTE]
-> Prebuilt `.pte` artifacts are published at [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE), covering both quantizations across text / text+image, solo / DFlash, and Metal / CUDA. Downloading one skips this export step — **the runner build in step 3 is still required.** Their CUDA blob is named after its own directory rather than `aoti_cuda_blob.ptd`, so `--data-path` below needs adjusting to match. Upstream does not document serving these files yet, so this page stays on the export path.
+> Prebuilt `.pte` artifacts are published at [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE), covering both quantizations across text / text+image, solo / DFlash, and Metal / CUDA. Downloading one skips this export step — **the runner build in step 3 is still required.** The [announcement above](https://pytorch.org/blog/fast-ondevice-agentic-ai-with-executorch/) prefers downloading over exporting, but the filenames in its example commands are not the ones in the published bundles: each bundle directory names both its `.pte` and its `.ptd` after itself, so `--model-path` and `--data-path` below both need adjusting to match. This page stays on the export path, where the filenames are the ones shown.
 
 ### 3. Build the runner
 

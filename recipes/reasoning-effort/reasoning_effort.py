@@ -43,7 +43,7 @@ def ask(client: OpenAI, model: str, effort: str) -> dict:
     message = resp.choices[0].message
     answer = (message.content or "").strip()
     # Muse Glimmer's `to=self` channel is routed here by vLLM's reasoning parser.
-    reasoning = getattr(message, "reasoning_content", None) or ""
+    reasoning = getattr(message, "reasoning", None) or ""
 
     usage = resp.usage
     details = getattr(usage, "completion_tokens_details", None)

@@ -18,29 +18,36 @@ Every path here runs fully offline after the initial weight download. No API key
 > - bf16 lands around 59–60 GB: fits a single 80 GB card, or two cards with tensor parallelism.
 > - Q4_K_M / INT4 lands around 16–17 GB.
 >
-> Every recipe in this cookbook is verified at bf16 on vLLM. Quantized paths work, but we don't verify each recipe across quant schemes.
+> The agentic recipes in this cookbook target bf16 on vLLM. Quantized paths work, but we don't check each recipe across quant schemes.
 
 ## Serve with vLLM
 
 > [!NOTE]
-> Status: verified. This is the path to use for agentic tool calling.
+> Status: unverified end to end. This is the path to use for agentic tool calling, and it follows the official vLLM recipe, but no full run has been attested for this cookbook. Details in [`../inference-server/vllm.md`](../inference-server/vllm.md).
 
-vLLM has a native Muse Glimmer model (`MuseGlimmerForCausalLM`, no `trust_remote_code`) plus a tool-call parser and reasoning parser.
+vLLM has a native Muse Glimmer model (`MuseGlimmerForCausalLM`, no `trust_remote_code`) plus a tool-call parser and reasoning parser. They ship in a dedicated image — `pip install vllm` will not serve this model, because Muse Glimmer support is still an unmerged upstream PR and isn't in any released wheel.
 
 ```bash
-pip install vllm
+docker pull vllm/vllm-openai:muse-glimmer
 ```
 
+The image's entrypoint is already `vllm serve`, so everything after the image name is appended as arguments:
+
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model meta-models/Muse-Glimmer-30B \
+docker run --rm --gpus all --ipc=host \
+  -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  vllm/vllm-openai:muse-glimmer \
+  meta-models/Muse-Glimmer-30B \
   --served-model-name muse-glimmer \
+  --tensor-parallel-size 1 \
   --enable-auto-tool-choice \
-  --tool-call-parser muse-glimmer \
-  --reasoning-parser muse-glimmer \
-  --chat-template examples/tool_chat_template_muse_glimmer.jinja \
+  --tool-call-parser muse_glimmer \
+  --reasoning-parser muse_glimmer \
   --generation-config auto
 ```
+
+Budget 72 GB of VRAM to serve — the bf16 weights are ~60 GB, and KV cache and activations need the rest.
 
 Test tool calling against the OpenAI-compatible endpoint:
 
@@ -61,7 +68,7 @@ curl http://localhost:8000/v1/chat/completions \
 }'
 ```
 
-You get back a structured `tool_calls` array with `get_weather(city="Paris", units="celsius")`.
+You get back `get_weather(city="Paris", units="celsius")`. Note that Muse Glimmer emits one tool call per message — several calls arrive as consecutive assistant messages, not as several entries in one `tool_calls` array.
 
 > [!WARNING]
 > Stop tokens matter. Set `eos_token_id = [<|end_of_text|>, <|eot|>]`. Don't add `<|eom|>` as a stop token: it's end-of-*message* (the turn continues), and stopping on it drops parallel tool calling to near zero. Details in [`../inference-server/vllm.md`](../inference-server/vllm.md).
@@ -132,9 +139,9 @@ For tool calling, use the vLLM path above: Ollama's default templates may not em
 | Symptom | Cause | Fix |
 |---|---|---|
 | Model never stops generating | Missing or wrong stop tokens | Set `eos_token_id=[<\|end_of_text\|>, <\|eot\|>]`. Don't include `<\|eom\|>`. |
-| Tool calls come back as plain text | Server isn't parsing the tool block | Use vLLM with `--tool-call-parser muse-glimmer`, or parse it yourself ([agentic-fundamentals](../agentic-fundamentals/)). |
+| Tool calls come back as plain text | Server isn't parsing the tool block | Use vLLM with `--tool-call-parser muse_glimmer`, or parse it yourself ([agentic-fundamentals](../agentic-fundamentals/)). |
 | OOM on a 24 GB card | Running bf16 (~60 GB) | Add tensor parallelism, or use a quantized build (Ollama, LM Studio). |
-| `trust_remote_code` prompt | Checkpoint ships custom modeling code | Use the native path: transformers ≥ 5.15, or serve with vLLM. |
+| `trust_remote_code` prompt | Checkpoint ships custom modeling code | Use the native path: transformers ≥ 5.15, or serve with the `vllm/vllm-openai:muse-glimmer` image. |
 
 ## Next steps
 

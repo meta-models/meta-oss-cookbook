@@ -46,12 +46,27 @@ BACKEND=cuda   # mlx on macOS
 
 ### 2. Export
 
+Target model:
+
 ```bash
 python -m executorch.examples.models.muse_glimmer.export.export_solo \
   --gguf "$TARGET" --backend "$BACKEND" --output-dir exports/solo
 ```
 
-Add `--mmproj "$MMPROJ"` for vision; that also writes `pos_embed.bin` beside `model.pte`. For speculative decoding, `export_dflash` takes `--target-gguf` and `--draft-gguf` instead.
+DFlash speculative decoding lowers the target and the draft together, into their own export directory:
+
+```bash
+python -m executorch.examples.models.muse_glimmer.export.export_dflash \
+  --target-gguf "$TARGET" \
+  --draft-gguf "$DRAFT" \
+  --backend "$BACKEND" \
+  --output-dir exports/dflash
+```
+
+Add `--mmproj "$MMPROJ"` to either command for vision; that also writes `pos_embed.bin` beside `model.pte`.
+
+> [!NOTE]
+> [`meta-models/Muse-Glimmer-30B-ExecuTorch-PTE`](https://huggingface.co/meta-models/Muse-Glimmer-30B-ExecuTorch-PTE) publishes prebuilt `.pte` artifacts covering both quantizations, text and text+image, solo and DFlash, for CUDA and Metal. It skips this export step but not the runner build below, and upstream does not yet document serving those files, so this page stays on the export path.
 
 ### 3. Build the runner
 
@@ -75,7 +90,7 @@ python -m executorch.examples.models.muse_glimmer.serving.serve \
   --host 127.0.0.1 --port 8000
 ```
 
-On MLX, drop `--data-path`. For DFlash, point both artifact paths at `exports/dflash` — the server detects the exported method contract. For vision, add `--pos-embed-path exports/solo/pos_embed.bin`.
+On MLX, drop `--data-path`. For DFlash, replace `exports/solo` with `exports/dflash` in both artifact paths — the server detects the exported method contract. For vision, add `--pos-embed-path <export-dir>/pos_embed.bin`.
 
 ```bash
 curl http://127.0.0.1:8000/v1/chat/completions \
@@ -83,7 +98,7 @@ curl http://127.0.0.1:8000/v1/chat/completions \
   -d '{"model":"muse-glimmer-30B","messages":[{"role":"user","content":"What is the capital of France?"}],"max_tokens":32,"temperature":0}'
 ```
 
-`/health`, `/v1/models` and `/v1/chat/completions` (streaming and non-streaming) are implemented. Set `--max-context` to the context length used at export.
+`/health`, `/v1/models` and `/v1/chat/completions` (streaming and non-streaming) are implemented. `--max-context` bounds the context window; prompts over it are rejected with a 400.
 
 ## Verify tool calling
 

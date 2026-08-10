@@ -3,9 +3,9 @@
 Portable inference across CPU, Metal, CUDA, ROCm and Vulkan — the practical way to run Muse Glimmer on a single machine.
 
 > [!NOTE]
-> Status: verified on Apple silicon (Metal) — text, vision and tool calling, against ready-to-serve GGUF checkpoints. There is no conversion or quantization step.
+> Status: verified on Apple silicon (Metal) against upstream llama.cpp at commit `dd1ea52` — text, vision and tool calling, against ready-to-serve GGUF checkpoints. There is no conversion or quantization step.
 
-Muse Glimmer needs the Muse Glimmer build of llama.cpp, not upstream. It adds the `muse-glimmer` architecture, the vision projector, and DFlash speculative decoding.
+Upstream llama.cpp supports Muse Glimmer. Commit [`62bf73d25`](https://github.com/ggml-org/llama.cpp/commit/62bf73d25) ("model: Muse Glimmer Support", PR #26841) adds the `muse-glimmer` architecture, the vision projector, the ATEM tool-call parser and DFlash speculative decoding. No fork is needed.
 
 ## Install
 
@@ -32,13 +32,12 @@ Full-precision weights are not published as GGUF. For bf16, use the safetensors 
 ### 2. Build
 
 ```bash
-hf download someorgtoo/llama.cpp_onyx --repo-type model --revision muse-glimmer \
-  --local-dir ./llama.cpp_muse-glimmer
-cd llama.cpp_muse-glimmer
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp
 ```
 
 > [!IMPORTANT]
-> `--revision muse-glimmer` is not optional. The repository's `main` branch predates the architecture rename and fails to load these checkpoints with `missing tensor 'blk.0.attn_output_gate.weight'`.
+> Build from `master`. Muse Glimmer support landed on 2026-08-10 and is not in any tagged release yet — the newest tag at the time of writing, `b10343`, is six commits behind `62bf73d25` and does not register the `muse-glimmer` architecture, so the prebuilt release binaries cannot load these checkpoints.
 
 Pick your backend:
 
@@ -67,7 +66,7 @@ cmake --build build -j"$(nproc)"             --target llama-server llama-cli lla
 
 If `ccache` errors during the build, add `-DGGML_CCACHE=OFF`.
 
-Run the commands below from `llama.cpp_muse-glimmer`, so `./build/bin/` and the `./muse-glimmer/` download directory resolve.
+Run the commands below from the `llama.cpp` clone, with the `muse-glimmer/` download directory inside it, so both `./build/bin/` and `./muse-glimmer/` resolve. Otherwise pass absolute paths to `-m` and `--mmproj`.
 
 ## Serve
 
@@ -92,8 +91,9 @@ srv load_model: initializing, n_slots = 1, n_ctx_slot = 131072, kv_unified = 'fa
 
 If it instead reports `exceeds the training context ... - capping`, the GGUF's
 `context_length` metadata is stale and the server clamps the slot to it — no serve
-flag overrides this. Fix the metadata:
-`gguf_set_metadata.py <model>.gguf muse-glimmer.context_length 131072`.
+flag overrides this. Fix the metadata with the script in the llama.cpp clone
+(`muse-glimmer` is the architecture name llama.cpp registers, so it is the key prefix):
+`python gguf-py/gguf/scripts/gguf_set_metadata.py <model>.gguf muse-glimmer.context_length 131072`.
 
 | Flag | Why |
 |---|---|
@@ -107,7 +107,7 @@ flag overrides this. Fix the metadata:
 Drop `--mmproj` for text-only. For speculative decoding add `-md <draft>.gguf --spec-type draft-dflash -ngld 99 --spec-draft-n-max 4`.
 
 > [!NOTE]
-> The `muse-glimmer` branch ships no chat template under `models/templates/`, so there is nothing to pass to `--chat-template-file`. `--jinja` on its own uses the template embedded in the GGUF, which is what these commands rely on.
+> Do not pass `--chat-template-file`. Upstream ships no Muse Glimmer template under `models/templates/`, and none is needed: `--jinja` uses the template embedded in the GGUF, which is byte-for-byte identical to the `chat_template.jinja` published with the safetensors checkpoint. llama.cpp selects the ATEM tool-call parser by detecting that template, so tool calling works from `--jinja` alone.
 
 Smoke test (`--noproxy` bypasses a proxy that would intercept loopback):
 
@@ -131,7 +131,7 @@ Set it server-wide with `--chat-template-kwargs`, or per request:
 {"model":"muse-glimmer","messages":[...],"chat_template_kwargs":{"reasoning_strength":"low"}}
 ```
 
-Completion tokens on one agentic decision, same prompt, `temperature=0`:
+The model card documents four levels: `low`, `medium`, `high`, `xhigh`. Completion tokens on one agentic decision, same prompt, `temperature=0`:
 
 | `reasoning_strength` | completion tokens |
 |---|---|
@@ -178,7 +178,7 @@ Returns `finish_reason: "tool_calls"` and a `tool_calls` array with `get_weather
 
 ## Stop tokens
 
-Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. The template handles this; `--jinja --chat-template-file` is what wires it up. See [`README.md`](README.md#get-stop-tokens-right).
+Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. The template handles this; `--jinja` is what wires it up. See [`README.md`](README.md#get-stop-tokens-right).
 
 ## Next steps
 

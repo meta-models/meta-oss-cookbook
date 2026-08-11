@@ -7,6 +7,8 @@ Export Muse Glimmer ahead of time and serve it locally on CUDA or Apple silicon,
 
 Unlike the other servers here, ExecuTorch is ahead-of-time: the model is exported once into a `.pte` program for a specific backend, then served from that program.
 
+That is the point of it. The other runtimes on this list reimplement a model by hand per backend, which works for a plain text transformer but not for a novel architecture carrying multimodal input and block-diffusion speculative decoding — each backend would need its own rewrite of all three. With ExecuTorch the model and its decoding strategy are written once in PyTorch and `torch.export` lowers the whole graph ahead of time, to Triton on CUDA and to MLX-native or custom Metal kernels on Apple silicon.
+
 | Backend | Host | Artifacts written by a local export |
 |---|---|---|
 | CUDA | Linux or Windows | `model.pte` plus `aoti_cuda_blob.ptd` |
@@ -64,6 +66,8 @@ python -m executorch.examples.models.muse_glimmer.export.export_dflash \
   --backend "$BACKEND" \
   --output-dir exports/dflash
 ```
+
+Both land in one `.pte`: the draft shares the target's token embeddings and output head rather than carrying copies. The block dimension is exported dynamically, so block length is selectable at serve time — but the exported range is backend-specific, `[2, 16]` on MLX against `[2, 4]` on CUDA, where the draft count is also capped at 3.
 
 Add `--mmproj "$MMPROJ"` to either command for vision; that also writes `pos_embed.bin` beside `model.pte`.
 
@@ -166,6 +170,16 @@ Two OpenAI parameters are rejected with a structured 400 rather than silently ig
 ## Stop tokens
 
 Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. See [`README.md`](README.md#get-stop-tokens-right).
+
+## Limitations
+
+Runtime limits, not model limits — the [model card](https://huggingface.co/meta-models/Muse-Glimmer-30B) covers the latter.
+
+- **No video input.** Text and images only, one image per request.
+- **No continuous batching.** One request runs at a time: `--num-runners` must be 1, the exported methods are batch-1, and execution is serialized. Concurrent sessions are isolated from each other, not served in parallel.
+- **No cross-session prefix sharing and no checkpointing.** Every session holds its own KV cache, nothing is reused across sessions, and session state is discarded rather than saved.
+
+The upstream [announcement](https://pytorch.org/blog/fast-ondevice-agentic-ai-with-executorch/) lists all three as in progress. If you need concurrent throughput from one box today, use [`vllm.md`](vllm.md).
 
 ## Troubleshooting
 

@@ -6,19 +6,19 @@ Every path here runs fully offline after the initial weight download. No API key
 
 ## Pick your server
 
-| Server | Best for | Precision | Guide |
+| Server | Best for | Weights | Guide |
 |---|---|---|---|
-| vLLM | Serving to a team, tool calling | bf16 / fp8 | [jump](#serve-with-vllm) |
+| vLLM | Serving to a team, tool calling | bf16 | [jump](#serve-with-vllm) |
 | HF Transformers | Learning the loop, pure Python | bf16 | [jump](#run-with-hugging-face-transformers) |
-| Ollama | Single command, no build step | Q4_K_M | [jump](#run-with-ollama) |
-| LM Studio | GUI, Apple Silicon (MLX) | Q4 / MLX | [jump](#run-with-lm-studio) |
+| Ollama | Single command, no build step | Quantized GGUF | [jump](#run-with-ollama) |
+| LM Studio | GUI, Apple Silicon (MLX) | Quantized GGUF / MLX | [jump](#run-with-lm-studio) |
 
 > [!NOTE]
 > The dense Muse Glimmer text model is ~29B params.
 > - bf16 lands around 59–60 GB: fits a single 80 GB card, or two cards with tensor parallelism.
-> - Q4_K_M / INT4 lands around 16–17 GB.
+> - The published quantized builds land around 17–20 GB. See [`inference-server/llama-cpp.md`](../inference-server/llama-cpp.md) for the files and their sizes.
 >
-> The agentic recipes in this cookbook target bf16 on vLLM. Quantized paths work, but we don't check each recipe across quant schemes.
+> Each recipe's banner names the weights and server it was run on; those differ by recipe.
 
 ## Serve with vLLM
 
@@ -131,7 +131,7 @@ For tool calling, use the vLLM path above: Ollama's default templates may not em
 > Status: pending LM Studio / MLX quant publish. See [`../inference-server/lm-studio.md`](../inference-server/lm-studio.md).
 
 1. Install LM Studio from [lmstudio.ai](https://lmstudio.ai).
-2. Search the model catalog for Muse Glimmer and download the recommended build (MLX on Apple Silicon, GGUF Q4_K_M elsewhere).
+2. Search the model catalog for Muse Glimmer and download the recommended build (MLX on Apple Silicon, GGUF elsewhere).
 3. Load it and open the Chat tab, or start the Local Server (OpenAI-compatible, `:1234`) to call it from code.
 
 ## Troubleshooting

@@ -29,7 +29,7 @@ What the image gives you for Muse Glimmer:
 
 Parser names use **underscores** (`muse_glimmer`). vLLM matches them literally, so the hyphenated form fails. `--served-model-name muse-glimmer` is a label you choose and stays hyphenated.
 
-Vision (multimodal) is a fast-follow. Text and tool calling work today.
+Image input is a model capability, not a pending one — the checkpoint ships a perception encoder, and vLLM's own recipe lists this model under both `text` and `multimodal` and budgets memory for that encoder. What this page cannot give you is an attested image request: the official recipe publishes no image example, and nobody has run one against this cookbook. Treat the commands below as text and tool calling. For an image path verified today, see [`llama-cpp.md`](llama-cpp.md).
 
 Full tool calling needs a checkpoint converted with the current HF Muse Glimmer converter, whose tokenizer registers the framing tokens (`<|eom|>`, `<|eot|>`, `<|start|>`, `<|message|>`) as real single tokens. Legacy exports still work for text and NLL, but won't produce clean token-level framing.
 

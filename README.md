@@ -30,8 +30,8 @@ A local agent running on your own machine that completes a real multi-step task,
 Each recipe follows the same contract so you always know what you're getting:
 
 - **Runs end to end, offline**: Any network use is optional and flagged.
-- **Recipe banner up top**: Max VRAM we actually observed, precision, and model server before you run anything. We don't publish numbers for hardware we haven't run on.
-- **Precision and server vary by recipe**: Each banner names the one combination that recipe was actually run on — most are bf16 on vLLM, while [`recipes/computer-use-web/`](recipes/computer-use-web/) runs a Q4KM GGUF on llama.cpp. Other combinations generally work; we just don't re-verify every recipe against each one.
+- **Recipe banner up top**: Precision, model server, and the max VRAM we observed, before you run anything. We don't publish numbers for hardware we haven't run on — where a recipe hasn't been measured, its banner says so instead of estimating.
+- **Precision and server vary by recipe**: Most are bf16 on vLLM; [`recipes/computer-use-web/`](recipes/computer-use-web/) is a quantized GGUF on llama.cpp. Other combinations generally work; we just don't re-verify every recipe against each one.
 - **Copy-paste first**: One command to run. The explanation comes after.
 - **Ends with "make it yours"**: The extension hook, plus troubleshooting.
 

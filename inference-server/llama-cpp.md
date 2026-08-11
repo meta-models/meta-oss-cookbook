@@ -39,7 +39,6 @@ llama serve \
   -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb \
   --hf-repo-draft meta-models/Muse-Glimmer-30B-GGUF:dflash-kquant \
   --spec-type draft-dflash \
-  -ngld 99 \
   --spec-draft-n-max 4
 ```
 
@@ -50,7 +49,6 @@ llama serve \
 | `-a muse-glimmer` | The name the API answers to. Without it the alias is the checkpoint path, and the `"model": "muse-glimmer"` every example here sends will not match. |
 | `--chat-template-kwargs` | Sets `reasoning_strength` — see below. Template default is `high`. |
 | `-np N` | Concurrent slots, and **the context is divided N ways**: `-np 4` with `-c 131072` gives each slot 32768. Long-context agents want `-np 1`. See [Context per slot](#context-per-slot). |
-| `-ngl 99` | Offload all layers to the GPU. |
 | `--api-key` | Guards inference endpoints only; `/health` and `/v1/models` still answer without it. |
 
 
@@ -127,10 +125,10 @@ Images are billed as prompt tokens, scaling with resolution.
 You can use `llama cli` to interact with the model through CLI.
 
 ```bash
-llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -ngl 99 -c 32768 --jinja -st
+llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -c 32768 --jinja -st
 ```
 
-`-st` / `--single-turn` answers once and exits. Without it `llama-cli` stays interactive and waits on stdin, which reads as a hang.
+`-st` / `--single-turn` answers once and exits. Without it `llama cli` stays interactive and waits on stdin, which reads as a hang.
 
 ## Verify tool calling
 

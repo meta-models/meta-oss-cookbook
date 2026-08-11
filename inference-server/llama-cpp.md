@@ -42,7 +42,10 @@ Muse Glimmer support first shipped in release [`b10353`](https://github.com/ggml
 >
 > `llama-server --version` prints the build number to check against: `version: 10353 (...)` or higher.
 
-The [releases page](https://github.com/ggml-org/llama.cpp/releases) publishes prebuilt binaries for macOS arm64 (Metal), Linux (CPU, CUDA, ROCm, Vulkan, SYCL) and Windows. If you take one, unpack it and skip to [Serve](#serve) — read `./build/bin/` in the commands below as the directory you unpacked.
+The [releases page](https://github.com/ggml-org/llama.cpp/releases) publishes prebuilt binaries for macOS arm64 (Metal), Windows (CPU, CUDA) and Linux (CPU, ROCm, Vulkan, SYCL, OpenVINO). If you take one, unpack it and skip to [Serve](#serve) — read `./build/bin/` in the commands below as the directory you unpacked.
+
+> [!IMPORTANT]
+> There is no prebuilt Linux CUDA binary — CUDA releases are published for Windows only. On Linux with an NVIDIA GPU, install through [llama.app](https://llama.app) or build from source. The Linux tarballs on the releases page are also built against Ubuntu's libstdc++, so on RHEL, CentOS and Fedora-family distros they can fail with `GLIBCXX_3.4.30' not found`.
 
 To build from source instead — `master` is well past the floor:
 
@@ -60,7 +63,7 @@ Pick your backend:
 cmake -B build -DGGML_METAL=ON -DCMAKE_BUILD_TYPE=Release \
   -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF
 
-# NVIDIA (CUDA >= 12.4; set the arch for your card, 90 = Hopper, 120 = Blackwell)
+# NVIDIA (CUDA >= 12.4; set the arch for your card, 80 = Ampere, 90 = Hopper, 120 = Blackwell)
 cmake -B build -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=OFF \
   -DCMAKE_CUDA_ARCHITECTURES=90 \
   -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF

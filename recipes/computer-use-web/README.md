@@ -28,12 +28,11 @@ Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.
 Llama.cpp automatically downloads, caches and serves models with the command `llama serve -hf`. Muse Glimmer supports a native context of **131072**:
 
 ```bash
-llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs --jinja '{"reasoning_strength":"high"}' -np 1 -a muse-glimmer
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"high"}' -np 1 -a muse-glimmer
 ```
 
 - `-a muse-glimmer` is the name the API answers to, and it has to match the `--model muse-glimmer` set in step 4. Without it the alias is the checkpoint path and the request does not match.
 - `-np 1` keeps the whole context in one slot; the agent needs it.
-- `--jinja` applies the template embedded in the GGUF. It is what wires up tool calling and the correct stop set — `<|end_of_text|>` and `<|eot|>`, never `<|eom|>`.
 - `--chat-template-kwargs '{"reasoning_strength":"high"}'` is where reasoning length is set; the levels are `low`, `medium`, `high` and `xhigh`. **metacua's `--effort` flag has no effect here** — llama.cpp does not read the Responses API's `reasoning.effort` field, so the server flag is the only knob. See [Controlling reasoning length](../../inference-server/llama-cpp.md#controlling-reasoning-length).
 - This recipe wants `high`. A misclick navigates somewhere else and costs several steps to undo, so deliberation is worth paying for — unlike tasks whose environment validates each action for free.
 

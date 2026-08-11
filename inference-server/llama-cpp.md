@@ -45,15 +45,11 @@ llama serve \
 
 | Flag | Why |
 |---|---|
-| `--jinja` | Applies the Muse Glimmer control-token template embedded in the GGUF. Without it, tool calling and reasoning separation break. |
 | `-a muse-glimmer` | The name the API answers to. Without it the alias is the checkpoint path, and the `"model": "muse-glimmer"` every example here sends will not match. |
 | `--chat-template-kwargs` | Sets `reasoning_strength` — see below. Template default is `high`. |
 | `-np N` | Concurrent slots, and **the context is divided N ways**: `-np 4` with `-c 131072` gives each slot 32768. Long-context agents want `-np 1`. See [Context per slot](#context-per-slot). |
 | `--api-key` | Guards inference endpoints only; `/health` and `/v1/models` still answer without it. |
 
-
-> [!NOTE]
-> Do not pass `--chat-template-file`. Upstream ships no Muse Glimmer template under `models/templates/`, and none is needed: `--jinja` uses the template embedded in the GGUF, which is byte-for-byte identical to the `chat_template.jinja` published with the safetensors checkpoint. llama.cpp selects the ATEM tool-call parser by detecting that template, so tool calling works from `--jinja` alone.
 
 Smoke test (`--noproxy` bypasses a proxy that would intercept loopback):
 
@@ -125,7 +121,7 @@ Images are billed as prompt tokens, scaling with resolution.
 You can use `llama cli` to interact with the model through CLI.
 
 ```bash
-llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -c 32768 --jinja -st
+llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -c 32768 -st
 ```
 
 `-st` / `--single-turn` answers once and exits. Without it `llama cli` stays interactive and waits on stdin, which reads as a hang.
@@ -145,10 +141,6 @@ curl -s --noproxy '*' http://127.0.0.1:8080/v1/chat/completions \
 ```
 
 Returns `finish_reason: "tool_calls"` and a `tool_calls` array with `get_weather(city="Paris", units="celsius")`, reasoning under `reasoning_content`. Parsing is server-side, so any OpenAI-compatible harness needs no Muse Glimmer-specific handling.
-
-## Stop tokens
-
-Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. The template handles this; `--jinja` is what wires it up. See [`README.md`](README.md#get-stop-tokens-right).
 
 ## Next steps
 

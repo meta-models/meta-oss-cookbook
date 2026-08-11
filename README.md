@@ -23,6 +23,7 @@ A local agent running on your own machine that completes a real multi-step task,
 | Ship a flagship agent (structured output, reasoning control, a triage pipeline) | [`recipes/`](recipes/) |
 | Serve Muse Glimmer (vLLM, Ollama, LM Studio, SGLang, llama.cpp) | [`inference-server/`](inference-server/) |
 | Deploy on specific partner hardware, and see which precisions it supports | [`platform/`](platform/) |
+| Call a hosted API instead of running the model yourself (needs a provider API key) | [`hosted/`](hosted/) |
 
 ## How every recipe is built
 

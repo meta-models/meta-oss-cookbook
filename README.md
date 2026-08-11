@@ -43,7 +43,7 @@ Each recipe follows the same contract so you always know what you're getting:
 | Size | 30B dense decoder. |
 | Suggested GPU | Fits a single 24–32 GB GPU when quantized (Q4/INT4, ~16–17 GB); bf16 needs ~60 GB (an 80 GB card, or sharded across several GPUs). |
 | Context | 131072 tokens (128K). |
-| Modalities | Text and tool calling today. Vision (image, video) is a fast-follow. |
+| Modalities | Text and image in, text out, plus tool calling — all supported today, through a dedicated ~1.8B perception encoder. Server support for image input varies; each [`inference-server/`](inference-server/) page states where it stands. Video is not a supported input: the model card processes it as individual frames and is not explicitly optimized for it. |
 | Tool format | An XML-ish `<atem:function_calls>` block. See [`agentic-fundamentals/`](agentic-fundamentals/). |
 | Chat framing | Channel-scoped `<\|start\|>role<\|message\|>…<\|eot\|>` with a `to=self` reasoning channel. |
 | License | See the [model card](https://huggingface.co/meta-models/Muse-Glimmer-30B) on HuggingFace. |

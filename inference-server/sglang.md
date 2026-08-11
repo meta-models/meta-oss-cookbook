@@ -1,17 +1,14 @@
-# SGLang
+# Deploy with SGLang
 
-High-throughput serving for many concurrent local users.
-
-> [!NOTE]
-> Status: not verified in this cookbook. SGLang publishes its own [Muse Glimmer cookbook page](https://docs.sglang.io/cookbook/autoregressive/Meta/MuseGlimmer) with a matrix of verified hardware/checkpoint combinations, and the commands below are taken from it and from a platform write-up supplied by the SGLang team (Liangsheng Yin, dated 2026-08-10). That page also confirms Muse Glimmer support is **not in an SGLang release** — it lives on the upstream `muse-glimmer` branch ([PR #34262](https://github.com/sgl-project/sglang/pull/34262)). Nothing here has been run for this cookbook. For a path verified here, see [`vllm.md`](vllm.md) or [`llama-cpp.md`](llama-cpp.md).
-
-Every "verified" claim on this page is SGLang's own, on SGLang's hardware. Attribution and dates are in the [platform matrix](#platforms-sglang-has-verified) below.
+Serve Muse Glimmer with [SGLang](https://docs.sglang.io) for high-throughput inference behind an OpenAI-compatible endpoint.
 
 ## Install
 
-Muse Glimmer is not in a released version, so SGLang's own guide builds the branch:
+Muse Glimmer support lives on the `muse-glimmer` branch ([PR #34262](https://github.com/sgl-project/sglang/pull/34262)) rather than in a released version, so install from source:
 
 ```bash
+pip install --upgrade pip
+pip install uv
 git clone -b muse-glimmer https://github.com/sgl-project/sglang.git
 cd sglang
 uv pip install -e "python[all]"
@@ -20,16 +17,13 @@ uv pip install -e "python[all]"
 > [!WARNING]
 > `uv pip install sglang` — the plain released package — does **not** work. [PR #34262](https://github.com/sgl-project/sglang/pull/34262) is still open, so no PyPI release contains the `muse-glimmer` architecture and the server cannot load these checkpoints. Build the branch above, or take the Docker image below. SGLang's own page carries the same warning.
 
-Or take the prebuilt image:
+A prebuilt image is the alternative:
 
 ```bash
 docker pull lmsysorg/sglang:dev-muse-glimmer
 ```
 
 Multi-arch — the same tag resolves to amd64 or arm64, so it also covers aarch64 boxes like DGX Spark. Verified present on Docker Hub on 2026-08-10, alongside explicit `dev-muse-glimmer-amd64` and `dev-muse-glimmer-arm64` tags if you need to pin one.
-
-> [!NOTE]
-> SGLang images are published under `lmsysorg/sglang`. `vllm/vllm-openai:muse-glimmer` is a real image but it is **vLLM's** server, not SGLang's — it belongs with [`vllm.md`](vllm.md), which is where this cookbook uses it.
 
 Both are from the official page's *Install SGLang* panel. See the [upstream install guide](https://docs.sglang.io/docs/get-started/install) for platform variations.
 
@@ -211,7 +205,7 @@ curl -s http://localhost:30000/v1/chat/completions \
        "tool_choice":"auto","temperature":0}'
 ```
 
-A working parser returns a `tool_calls` array with `get_weather(city="Paris", units="celsius")` and the thinking under `reasoning_content`. Until that is confirmed here, point agentic recipes at vLLM ([`vllm.md`](vllm.md)).
+A working parser returns a `tool_calls` array with `get_weather(city="Paris", units="celsius")` and the thinking under `reasoning_content`. Treat tool calling as unverified until that is confirmed here.
 
 ## Stop tokens
 
@@ -239,9 +233,7 @@ There is no serve flag for this. SGLang builds its stop set at load time by unio
 
 **The box itself runs out of memory during load, not just the server.** DGX Spark, with a discrete-GPU `--mem-fraction-static`. Use the values in the table; the OS and your clients share that memory.
 
-## Support
-
-SGLang's, not ours — nothing on this page was verified in this cookbook.
+## Upstream support
 
 - Issues: https://github.com/sgl-project/sglang/issues
 - Docs: https://docs.sglang.io
@@ -249,5 +241,5 @@ SGLang's, not ours — nothing on this page was verified in this cookbook.
 
 ## Next steps
 
-- Serve with a path verified here instead: [`vllm.md`](vllm.md) or [`llama-cpp.md`](llama-cpp.md)
+- Speed up generation with [DFlash speculative decoding](#speculative-decoding-dflash)
 - Learn the loop: [`../agentic-fundamentals/`](../agentic-fundamentals/)

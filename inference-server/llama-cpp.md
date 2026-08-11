@@ -9,113 +9,40 @@ Upstream llama.cpp supports Muse Glimmer. Commit [`62bf73d25`](https://github.co
 
 ## Install
 
-### 1. Download the checkpoints
+### 1. Get llama.cpp
 
-GGUF builds live in [`meta-models/Muse-Glimmer-30B-GGUF`](https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF). Fetch only the two files you need — the text model and, for image input, the vision projector:
-
-```bash
-pip install -U huggingface_hub
-hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir ./muse-glimmer \
-  --include "muse-glimmer-30B-kquant-17gb.gguf" \
-  --include "mmproj-kquant.gguf"
-```
-
-| File | What | Size |
-|---|---|---|
-| `muse-glimmer-30B-kquant-17gb.gguf` | text model, K-quant — **use this one** | ~17 GB |
-| `muse-glimmer-30B-kquant-dynamic.gguf` | text model, dynamic K-quant | ~20 GB |
-| `mmproj-kquant.gguf` | vision projector — needed for image input | ~1.4 GB |
-| `dflash-kquant.gguf` | speculative-decode draft model, optional | ~1.6 GB |
-
-Full-precision weights are not published as GGUF. For bf16, use the safetensors checkpoint at [`meta-models/Muse-Glimmer-30B`](https://huggingface.co/meta-models/Muse-Glimmer-30B) with [`vllm.md`](vllm.md).
-
-### 2. Get llama.cpp
-
-Muse Glimmer support first shipped in release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353). **Use `b10353` or newer** — a prebuilt binary and a source build both work.
-
-> [!IMPORTANT]
-> `b10344` and older do not register the `muse-glimmer` architecture and refuse to load these checkpoints:
->
-> ```
-> llama_model_load: error loading model: unknown model architecture: 'muse-glimmer'
-> ```
->
-> `llama-server --version` prints the build number to check against: `version: 10353 (...)` or higher.
-
-The [releases page](https://github.com/ggml-org/llama.cpp/releases) publishes prebuilt binaries for macOS arm64 (Metal), Linux (CPU, CUDA, ROCm, Vulkan, SYCL) and Windows. If you take one, unpack it and skip to [Serve](#serve) — read `./build/bin/` in the commands below as the directory you unpacked.
-
-To build from source instead — `master` is well past the floor:
+You can install pre-built llama binary with this command, it automatically downloads the one for your platform.
 
 ```bash
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
+curl -LsSf https://llama.app/install.sh | sh
 ```
-
-Add `--branch b10353` to pin to the floor, or any later tag to pin to a known build.
-
-Pick your backend:
-
-```bash
-# Apple silicon (Metal)
-cmake -B build -DGGML_METAL=ON -DCMAKE_BUILD_TYPE=Release \
-  -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF
-
-# NVIDIA (CUDA >= 12.4; set the arch for your card, 90 = Hopper, 120 = Blackwell)
-cmake -B build -DGGML_CUDA=ON -DCMAKE_BUILD_TYPE=Release -DGGML_NATIVE=OFF \
-  -DCMAKE_CUDA_ARCHITECTURES=90 \
-  -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF
-
-# CPU only
-cmake -B build -DCMAKE_BUILD_TYPE=Release \
-  -DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF
-```
-
-```bash
-cmake --build build -j"$(sysctl -n hw.ncpu)" --target llama-server llama-cli llama-mtmd-cli   # macOS
-cmake --build build -j"$(nproc)"             --target llama-server llama-cli llama-mtmd-cli   # Linux
-```
-
-> [!IMPORTANT]
-> `-DLLAMA_BUILD_UI=OFF -DLLAMA_USE_PREBUILT_UI=OFF` disables the browser Web UI. Keep it off unless you need it: the UI build fetches assets over the network and fails behind restrictive proxies or without Node.js. The HTTP API is unaffected.
-
-If `ccache` errors during the build, add `-DGGML_CCACHE=OFF`.
-
-Confirm the checkout actually registers the architecture before you go looking for other reasons a load failed:
-
-```bash
-grep -c LLM_ARCH_MUSE_GLIMMER src/llama-arch.cpp   # expect >= 1
-```
-
-A `0` means the checkout predates Muse Glimmer support and will refuse these files.
-
-Run the commands below from the `llama.cpp` clone (or the unpacked release directory), with the `muse-glimmer/` download directory inside it, so both `./build/bin/` and `./muse-glimmer/` resolve. Otherwise pass absolute paths to `-m` and `--mmproj`.
 
 ## Serve
 
-Muse Glimmer supports a native context of **131072**:
+Llama.cpp automatically downloads, caches and serves models with the command `llama serve -hf`. Muse Glimmer supports a native context of **131072**:
 
 ```bash
-./build/bin/llama-server \
-  -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
-  --mmproj ./muse-glimmer/mmproj-kquant.gguf \
-  -a muse-glimmer \
-  -ngl 99 -c 131072 -np 1 \
-  --host 127.0.0.1 --port 8080 --api-key <your-key> \
-  --jinja \
-  --chat-template-kwargs '{"reasoning_strength":"low"}'
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"low"}'
 ```
 
-The server prints the context you actually got:
+You can specify which quantization you want to serve by passing quant suffix.
 
-```
-srv load_model: initializing, n_slots = 1, n_ctx_slot = 131072, kv_unified = 'false'
+```bash
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-dynamic
 ```
 
-If it instead reports `exceeds the training context ... - capping`, the GGUF's
-`context_length` metadata is stale and the server clamps the slot to it — no serve
-flag overrides this. Fix the metadata with the script in the llama.cpp clone
-(`muse-glimmer` is the architecture name llama.cpp registers, so it is the key prefix):
-`python gguf-py/gguf/scripts/gguf_set_metadata.py <model>.gguf muse-glimmer.context_length 131072`.
+You can run llama.cpp with DFlash speculative decoding as follows.
+
+```bash
+llama serve \
+  -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb \
+  --hf-repo-draft meta-models/Muse-Glimmer-30B-GGUF:dflash-kquant \
+  --spec-type draft-dflash \
+  -ngld 99 \
+  --spec-draft-n-max 4
+```
+
 
 | Flag | Why |
 |---|---|
@@ -126,9 +53,6 @@ flag overrides this. Fix the metadata with the script in the llama.cpp clone
 | `-ngl 99` | Offload all layers to the GPU. |
 | `--api-key` | Guards inference endpoints only; `/health` and `/v1/models` still answer without it. |
 
-Thinking lands in `message.reasoning_content` and `message.content` stays clean — that is the server default, no flag needed. Pass `--reasoning-format none` to keep thinking inline in `message.content` instead.
-
-Drop `--mmproj` for text-only. For speculative decoding add `-md <draft>.gguf --spec-type draft-dflash -ngld 99 --spec-draft-n-max 4`. A `[spec] failed to measure draft model memory` warning at startup is harmless — the draft loads and serves normally after it.
 
 > [!NOTE]
 > Do not pass `--chat-template-file`. Upstream ships no Muse Glimmer template under `models/templates/`, and none is needed: `--jinja` uses the template embedded in the GGUF, which is byte-for-byte identical to the `chat_template.jinja` published with the safetensors checkpoint. llama.cpp selects the ATEM tool-call parser by detecting that template, so tool calling works from `--jinja` alone.
@@ -200,29 +124,13 @@ Images are billed as prompt tokens, scaling with resolution.
 
 ## Command line, without the server
 
-The build produces two CLI binaries alongside `llama-server`. Text goes through `llama-cli`:
+You can use `llama cli` to interact with the model through CLI.
 
 ```bash
-./build/bin/llama-cli \
-  -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
-  -ngl 99 -c 32768 --jinja -st
+llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -ngl 99 -c 32768 --jinja -st
 ```
 
 `-st` / `--single-turn` answers once and exits. Without it `llama-cli` stays interactive and waits on stdin, which reads as a hang.
-
-For images, use `llama-mtmd-cli` — that is the binary the model's GGUF run notes exercise, and the one this page's flags are known against:
-
-```bash
-./build/bin/llama-mtmd-cli \
-  -m       ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
-  --mmproj ./muse-glimmer/mmproj-kquant.gguf \
-  -ngl 99 -c 32768 --jinja \
-  --image photo.png -p "Describe this image."
-```
-
-`--jinja` is required here too; without it `llama-mtmd-cli` aborts with `this custom template is not supported, try using --jinja`.
-
-Both CLIs print the thinking trace inline with the answer, and neither separates the two. `--reasoning-format` only applies to the server's JSON response, so if you want `content` and `reasoning_content` apart, use `llama-server`.
 
 ## Verify tool calling
 

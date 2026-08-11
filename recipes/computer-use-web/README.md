@@ -30,7 +30,6 @@ Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.
   -ngl 99 -c 131072 -np 1 \
   --host 127.0.0.1 --port 8080 --api-key muse-glimmer \
   --jinja \
-  --reasoning-format deepseek \
   --chat-template-kwargs '{"reasoning_strength":"high"}'
 ```
 

@@ -93,7 +93,6 @@ Muse Glimmer supports a native context of **131072**:
   -ngl 99 -c 131072 -np 1 \
   --host 127.0.0.1 --port 8080 --api-key <your-key> \
   --jinja \
-  --reasoning-format deepseek \
   --chat-template-kwargs '{"reasoning_strength":"low"}'
 ```
 
@@ -112,11 +111,12 @@ flag overrides this. Fix the metadata with the script in the llama.cpp clone
 | Flag | Why |
 |---|---|
 | `--jinja` | Applies the Muse Glimmer control-token template embedded in the GGUF. Without it, tool calling and reasoning separation break. |
-| `--reasoning-format deepseek` | Routes the thinking channel to `message.reasoning_content`, leaving `message.content` clean. |
 | `--chat-template-kwargs` | Sets `reasoning_strength` — see below. Template default is `high`. |
 | `-np N` | Concurrent slots, and **the context is divided N ways**: `-np 4` with `-c 131072` gives each slot 32768. Long-context agents want `-np 1`. |
 | `-ngl 99` | Offload all layers to the GPU. |
 | `--api-key` | Guards inference endpoints only; `/health` and `/v1/models` still answer without it. |
+
+Thinking lands in `message.reasoning_content` and `message.content` stays clean — that is the server default, no flag needed. Pass `--reasoning-format none` to keep thinking inline in `message.content` instead.
 
 Drop `--mmproj` for text-only. For speculative decoding add `-md <draft>.gguf --spec-type draft-dflash -ngld 99 --spec-draft-n-max 4`.
 

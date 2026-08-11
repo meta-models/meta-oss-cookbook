@@ -31,8 +31,10 @@ pip install -r examples/llm_server/python/requirements.txt
 Exports lower directly from the quantized GGUFs — the same files [`llama-cpp.md`](llama-cpp.md) uses — plus tokenizer metadata from the safetensors repo. Run from the ExecuTorch repository root:
 
 ```bash
-hf download meta-models/Muse-Glimmer-30B-GGUF \
-  --include '*.gguf' --exclude '*[Bb][Ff]16*.gguf' --local-dir assets/quant
+hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir assets/quant \
+  --include 'muse-glimmer-30B-kquant-17gb.gguf' \
+  --include 'dflash-kquant.gguf' \
+  --include 'mmproj-kquant.gguf'
 
 hf download meta-models/Muse-Glimmer-30B \
   tokenizer.json chat_template.jinja config.json processor_config.json \
@@ -42,9 +44,9 @@ hf download meta-models/Muse-Glimmer-30B \
 `chat_template.jinja` must stay beside the tokenizer metadata; the serving path renders prompts and tool definitions with it.
 
 ```bash
-TARGET="$(find assets/quant -name 'muse-glimmer-30B-kquant-17gb.gguf' -print -quit)"
-DRAFT="$(find assets/quant -name 'dflash-kquant.gguf' -print -quit)"
-MMPROJ="$(find assets/quant -name 'mmproj-kquant.gguf' -print -quit)"
+TARGET=assets/quant/muse-glimmer-30B-kquant-17gb.gguf
+DRAFT=assets/quant/dflash-kquant.gguf
+MMPROJ=assets/quant/mmproj-kquant.gguf
 BACKEND=cuda   # mlx on macOS
 ```
 
@@ -106,7 +108,8 @@ Each directory holds `<directory-name>.pte`; `sm80+ptx` variants add `<directory
 EXPORT_DIR=muse-glimmer-k-quant-17G-128K-text-solo-sm80+ptx
 
 hf download meta-models/Muse-Glimmer-30B-ExecuTorch-PTE \
-  --include "$EXPORT_DIR/*" tokenizer.json tokenizer_config.json chat_template.jinja \
+  --include "$EXPORT_DIR/*" \
+  --include tokenizer.json --include tokenizer_config.json --include chat_template.jinja \
   --local-dir exports
 ```
 

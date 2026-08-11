@@ -9,7 +9,7 @@ It works the way a person does: look at the screen, decide where to click, click
 | | |
 |---|---|
 | Precision | Quantized GGUF (Q4KM K-quant, ~17 GB on disk) |
-| Model server | llama.cpp, Muse Glimmer build |
+| Model server | llama.cpp (upstream, release `b10353` or newer) |
 | Offline? | Model runs locally; the task itself browses the web |
 | Memory observed | ~25 GB — model + vision projector + 128K KV cache |
 | Requires | [metacua](https://github.com/meta-models/meta-model-cookbook/tree/main/03_use_cases/13_macos_cua) · macOS with Safari |
@@ -21,32 +21,37 @@ It works the way a person does: look at the screen, decide where to click, click
 
 ### 1. Serve Muse Glimmer with vision
 
-Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md), then:
+Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the download and the build — you need `muse-glimmer-30B-kquant-17gb.gguf` plus `mmproj-kquant.gguf` for image input, and llama.cpp release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353) or newer. Upstream supports Muse Glimmer, so no fork is needed; `b10344` and older refuse to load these checkpoints with `unknown model architecture: 'muse-glimmer'`. Then:
 
 ```bash
 ./build/bin/llama-server \
   -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
   --mmproj ./muse-glimmer/mmproj-kquant.gguf \
+  -a muse-glimmer \
   -ngl 99 -c 131072 -np 1 \
   --host 127.0.0.1 --port 8080 --api-key muse-glimmer \
   --jinja \
   --chat-template-kwargs '{"reasoning_strength":"high"}'
 ```
 
+- `-a muse-glimmer` is the name the API answers to, and it has to match the `--model muse-glimmer` set in step 4. Without it the alias is the checkpoint path and the request does not match.
 - `-np 1` keeps the whole context in one slot; the agent needs it.
-- `--chat-template-kwargs '{"reasoning_strength":"high"}'` is where reasoning length is set. **metacua's `--effort` flag has no effect here** — llama.cpp does not read the Responses API's `reasoning.effort` field, so the server flag is the only knob. See [Controlling reasoning length](../../inference-server/llama-cpp.md#controlling-reasoning-length).
+- `--jinja` applies the template embedded in the GGUF. It is what wires up tool calling and the correct stop set — `<|end_of_text|>` and `<|eot|>`, never `<|eom|>`.
+- `--chat-template-kwargs '{"reasoning_strength":"high"}'` is where reasoning length is set; the levels are `low`, `medium`, `high` and `xhigh`. **metacua's `--effort` flag has no effect here** — llama.cpp does not read the Responses API's `reasoning.effort` field, so the server flag is the only knob. See [Controlling reasoning length](../../inference-server/llama-cpp.md#controlling-reasoning-length).
 - This recipe wants `high`. A misclick navigates somewhere else and costs several steps to undo, so deliberation is worth paying for — unlike tasks whose environment validates each action for free.
 
 ### 2. Install metacua
 
 ```bash
 git clone https://github.com/meta-models/meta-model-cookbook.git
-cd meta-model-cookbook/03_use_cases/13_macos_cua/python
+cd meta-model-cookbook
+git fetch origin pull/11/head:pr-11 && git switch pr-11
+cd 03_use_cases/13_macos_cua/python
 python3 -m venv .venv && .venv/bin/python -m pip install -U pip
 .venv/bin/pip install -e .
 ```
 
-Use a checkout that includes [meta-model-cookbook#11](https://github.com/meta-models/meta-model-cookbook/pull/11). Before it, the Python backend returned the screenshot inside the tool result, which llama.cpp rejects with `Output of tool call should be 'Input text'` on the second step of every run.
+[meta-model-cookbook#11](https://github.com/meta-models/meta-model-cookbook/pull/11) is still open, which is why the checkout above moves onto it instead of staying on `main`. On `main` the Python backend returns the screenshot inside the tool result, which llama.cpp rejects with `Output of tool call should be 'Input text'` on the second step of every run. Once it merges, clone `main` and drop the fetch/switch line.
 
 ### 3. Grant macOS permissions
 

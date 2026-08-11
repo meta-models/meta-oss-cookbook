@@ -21,7 +21,7 @@ A local agent running on your own machine that completes a real multi-step task,
 | Run the model with a single command | [`quickstart/`](quickstart/) |
 | Learn the tool-use loop (chat template, function calling, the agent loop) | [`agentic-fundamentals/`](agentic-fundamentals/) |
 | Ship a flagship agent (structured output, reasoning control, a triage pipeline) | [`recipes/`](recipes/) |
-| Serve Muse Glimmer (vLLM, Ollama, LM Studio, SGLang, llama.cpp) | [`inference-server/`](inference-server/) |
+| Serve Muse Glimmer (vLLM, Ollama, LM Studio, SGLang, llama.cpp, Unsloth, ExecuTorch) | [`inference-server/`](inference-server/) |
 | Deploy on specific partner hardware, and see which precisions it supports | [`platform/`](platform/) |
 | Call a hosted API instead of running the model yourself (needs a provider API key) | [`hosted/`](hosted/) |
 
@@ -31,7 +31,7 @@ Each recipe follows the same contract so you always know what you're getting:
 
 - **Runs end to end, offline**: Any network use is optional and flagged.
 - **Recipe banner up top**: Max VRAM we actually observed, precision, and model server before you run anything. We don't publish numbers for hardware we haven't run on.
-- **bf16 on vLLM**: Every recipe is verified at bf16 and served with vLLM. Quantized builds work; we just don't verify each recipe across every quant scheme.
+- **Precision and server vary by recipe**: Each banner names the one combination that recipe was actually run on — most are bf16 on vLLM, while [`recipes/computer-use-web/`](recipes/computer-use-web/) runs a Q4KM GGUF on llama.cpp. Other combinations generally work; we just don't re-verify every recipe against each one.
 - **Copy-paste first**: One command to run. The explanation comes after.
 - **Ends with "make it yours"**: The extension hook, plus troubleshooting.
 
@@ -56,4 +56,4 @@ Contributions welcome. Every recipe follows the shared template in [`assets/RECI
 
 ## License
 
-Please refere to the [License](LICENSE)
+Please refer to the [License](LICENSE)

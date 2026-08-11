@@ -8,11 +8,13 @@ It works the way a person does: look at the screen, decide where to click, click
 
 | | |
 |---|---|
-| Precision | Quantized GGUF (Q4KM K-quant, ~17 GB on disk) |
+| Precision | Quantized GGUF — dynamic K-quant (`muse-glimmer-30B-kquant-dynamic.gguf`, ~20 GB on disk) |
 | Model server | llama.cpp (upstream, release `b10353` or newer) |
 | Offline? | Model runs locally; the task itself browses the web |
-| Memory observed | ~25 GB — model + vision projector + 128K KV cache |
 | Requires | [metacua](https://github.com/meta-models/meta-model-cookbook/tree/main/03_use_cases/13_macos_cua) · macOS with Safari |
+
+> [!NOTE]
+> Status: not verified on this checkpoint. The walkthrough below was worked out on a different GGUF from the same repo. The llama.cpp flags and the metacua setup do not depend on which of the published checkpoints you load, so those carry over — but no measurement from that run does, which is why this banner publishes none. What *is* confirmed: `muse-glimmer-30B-kquant-dynamic.gguf` and `mmproj-kquant.gguf` are published in [`meta-models/Muse-Glimmer-30B-GGUF`](https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF), and llama.cpp `b10353` or newer loads this architecture. What is *not* confirmed: peak memory on this build, or that the agent loop runs end to end on it. If you complete a run, please say so in an issue so we can upgrade this banner.
 
 > [!CAUTION]
 > `metacua` takes real control of your Mac — it moves the pointer, types, and clicks whatever the model decides, with no confirmation step. Keep the terminal reachable so you can `Ctrl+C`, and don't type in other apps while it runs. Web pages can also prompt-inject the agent, so prefer sites you trust.
@@ -21,11 +23,22 @@ It works the way a person does: look at the screen, decide where to click, click
 
 ### 1. Serve Muse Glimmer with vision
 
-Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the download and the build — you need `muse-glimmer-30B-kquant-17gb.gguf` plus `mmproj-kquant.gguf` for image input, and llama.cpp release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353) or newer. Upstream supports Muse Glimmer, so no fork is needed; `b10344` and older refuse to load these checkpoints with `unknown model architecture: 'muse-glimmer'`. Then:
+Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the build — you need llama.cpp release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353) or newer. Upstream supports Muse Glimmer, so no fork is needed; `b10344` and older refuse to load these checkpoints with `unknown model architecture: 'muse-glimmer'`.
+
+That page downloads the smaller text build; this recipe uses the dynamic one, plus the vision projector for image input:
+
+```bash
+pip install -U huggingface_hub
+hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir ./muse-glimmer \
+  --include "muse-glimmer-30B-kquant-dynamic.gguf" \
+  --include "mmproj-kquant.gguf"
+```
+
+Then:
 
 ```bash
 ./build/bin/llama-server \
-  -m ./muse-glimmer/muse-glimmer-30B-kquant-17gb.gguf \
+  -m ./muse-glimmer/muse-glimmer-30B-kquant-dynamic.gguf \
   --mmproj ./muse-glimmer/mmproj-kquant.gguf \
   -a muse-glimmer \
   -ngl 99 -c 131072 -np 1 \

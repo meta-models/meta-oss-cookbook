@@ -25,7 +25,7 @@ Llama.cpp automatically downloads, caches and serves models with the command `ll
 llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"low"}'
 ```
 
-You can specify which quantization you want to serve by passing quant suffix.
+You can specify which quantization you want to serve by passing a quant suffix.
 
 ```bash
 llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb

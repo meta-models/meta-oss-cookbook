@@ -23,7 +23,7 @@ It works the way a person does: look at the screen, decide where to click, click
 
 ### 1. Serve Muse Glimmer with vision
 
-Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the build you can download pre-built binary for your setup by running `curl -LsSf https://llama.app/install.sh | sh`. 
+Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the build. You can easily download a pre-built binary for your hardware running `curl -LsSf https://llama.app/install.sh | sh`. 
 
 Llama.cpp automatically downloads, caches and serves models with the command `llama serve -hf`. Muse Glimmer supports a native context of **131072**:
 

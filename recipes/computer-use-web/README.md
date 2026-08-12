@@ -23,33 +23,16 @@ It works the way a person does: look at the screen, decide where to click, click
 
 ### 1. Serve Muse Glimmer with vision
 
-Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the build — you need llama.cpp release [`b10353`](https://github.com/ggml-org/llama.cpp/releases/tag/b10353) or newer. Upstream supports Muse Glimmer, so no fork is needed; `b10344` and older refuse to load these checkpoints with `unknown model architecture: 'muse-glimmer'`.
+Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.md) for the build. You can easily download a pre-built binary for your hardware running `curl -LsSf https://llama.app/install.sh | sh`. 
 
-That page downloads the smaller text build; this recipe uses the dynamic one, plus the vision projector for image input:
-
-```bash
-pip install -U huggingface_hub
-hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir ./muse-glimmer \
-  --include "muse-glimmer-30B-kquant-dynamic.gguf" \
-  --include "mmproj-kquant.gguf"
-```
-
-Then:
+Llama.cpp automatically downloads, caches and serves models with the command `llama serve -hf`. Muse Glimmer supports a native context of **131072**:
 
 ```bash
-./build/bin/llama-server \
-  -m ./muse-glimmer/muse-glimmer-30B-kquant-dynamic.gguf \
-  --mmproj ./muse-glimmer/mmproj-kquant.gguf \
-  -a muse-glimmer \
-  -ngl 99 -c 131072 -np 1 \
-  --host 127.0.0.1 --port 8080 --api-key muse-glimmer \
-  --jinja \
-  --chat-template-kwargs '{"reasoning_strength":"high"}'
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"high"}' -a muse-glimmer
 ```
 
 - `-a muse-glimmer` is the name the API answers to, and it has to match the `--model muse-glimmer` set in step 4. Without it the alias is the checkpoint path and the request does not match.
 - `-np 1` keeps the whole context in one slot; the agent needs it.
-- `--jinja` applies the template embedded in the GGUF. It is what wires up tool calling and the correct stop set — `<|end_of_text|>` and `<|eot|>`, never `<|eom|>`.
 - `--chat-template-kwargs '{"reasoning_strength":"high"}'` is where reasoning length is set; the levels are `low`, `medium`, `high` and `xhigh`. **metacua's `--effort` flag has no effect here** — llama.cpp does not read the Responses API's `reasoning.effort` field, so the server flag is the only knob. See [Controlling reasoning length](../../inference-server/llama-cpp.md#controlling-reasoning-length).
 - This recipe wants `high`. A misclick navigates somewhere else and costs several steps to undo, so deliberation is worth paying for — unlike tasks whose environment validates each action for free.
 

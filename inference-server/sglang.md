@@ -11,8 +11,11 @@ pip install --upgrade pip
 pip install uv
 git clone -b muse-glimmer https://github.com/sgl-project/sglang.git
 cd sglang
-uv pip install -e "python[all]"
+uv pip install -e python
 ```
+
+> [!TIP]
+> If the build fails with `cargo is required to discover the Rust extension modules`, prefix it with `SGLANG_BUILD_RUST_EXTS=none` — the Rust extensions are not needed to serve.
 
 > [!WARNING]
 > `uv pip install sglang` — the plain released package — does **not** work. [PR #34262](https://github.com/sgl-project/sglang/pull/34262) is still open, so no PyPI release contains the `muse-glimmer` architecture and the server cannot load these checkpoints. Build the branch above, or take the Docker image below. SGLang's own page carries the same warning.
@@ -202,7 +205,7 @@ curl -s http://localhost:30000/v1/chat/completions \
          "parameters":{"type":"object","properties":{
            "city":{"type":"string"},"units":{"type":"string","enum":["celsius","fahrenheit"]}},
            "required":["city"]}}}],
-       "tool_choice":"auto","temperature":0}'
+       "tool_choice":"auto","temperature":1}'
 ```
 
 A working parser returns a `tool_calls` array with `get_weather(city="Paris", units="celsius")` and the thinking under `reasoning_content`. Treat tool calling as unverified until that is confirmed here.

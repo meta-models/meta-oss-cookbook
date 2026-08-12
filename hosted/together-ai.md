@@ -1,9 +1,3 @@
----
-vendor: Together AI
-contact: Mourya Vangala Srinivasa (msrinivasa@together.ai)
-updated: 2026-08-11
----
-
 # Together AI
 
 Together AI serves Muse Glimmer as a managed API. There are no weights to download, no runtime to install, and no GPU to own — you send requests to `https://api.together.xyz/v1/chat/completions` with a model string and an API key.

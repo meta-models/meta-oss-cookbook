@@ -4,18 +4,18 @@ Serve Muse Glimmer with [SGLang](https://docs.sglang.io) for high-throughput inf
 
 ## Install
 
-Muse Glimmer support lives on the `muse-glimmer` branch ([PR #34262](https://github.com/sgl-project/sglang/pull/34262)) rather than in a released version, so install from source:
+Muse Glimmer support is merged into `main` ([PR #34262](https://github.com/sgl-project/sglang/pull/34262), merged 2026-08-11) but is not in a released version yet, so install from source:
 
 ```bash
 pip install --upgrade pip
 pip install uv
-git clone -b muse-glimmer https://github.com/sgl-project/sglang.git
+git clone https://github.com/sgl-project/sglang.git
 cd sglang
-uv pip install -e "python[all]"
+uv pip install -e python
 ```
 
 > [!WARNING]
-> `uv pip install sglang` — the plain released package — does **not** work. [PR #34262](https://github.com/sgl-project/sglang/pull/34262) is still open, so no PyPI release contains the `muse-glimmer` architecture and the server cannot load these checkpoints. Build the branch above, or take the Docker image below. SGLang's own page carries the same warning.
+> `uv pip install sglang` — the plain released package — does **not** work yet. [PR #34262](https://github.com/sgl-project/sglang/pull/34262) merged on 2026-08-11, but the newest PyPI release (0.5.17, 2026-08-08) predates it, so no release contains the `muse-glimmer` architecture and the server cannot load these checkpoints. Build from source above, or take the Docker image below. Once a release ships with the merge in it, this should stop being necessary.
 
 A prebuilt image is the alternative:
 
@@ -76,7 +76,7 @@ sglang serve \
   --host 0.0.0.0 --port 30000
 ```
 
-`python -m sglang.launch_server` with the same flags is the equivalent long form; both entrypoints exist on the branch.
+`python -m sglang.launch_server` with the same flags is the equivalent long form; both entrypoints exist on `main`.
 
 ### GGUF Q4_K_M — 32 GB cards
 
@@ -186,10 +186,10 @@ Three MLX artifacts are drop-in `--model-path` swaps: `q4km-gs128` carries the s
 
 ## Verify tool calling
 
-Not verified here. SGLang does ship the parser — `--tool-call-parser muse` resolves to `MuseGlimmerDetector`, and the official page documents tool calling as supported and passes the flag in every published command — but it exists only on the `muse-glimmer` branch, not in `main` or any release, and no tool-calling round has been run against it for this cookbook.
+Not verified here. SGLang does ship the parser — `--tool-call-parser muse` resolves to `MuseGlimmerDetector`, and the official page documents tool calling as supported and passes the flag in every published command — but it landed in `main` only on 2026-08-11 and is not in any release yet, and no tool-calling round has been run against it for this cookbook.
 
 > [!NOTE]
-> SGLang's page says the `muse` reasoning and tool-call parsers are "enabled by default". On the branch as it stands, `tool_call_parser` defaults to `None` in `server_args.py` and there is no Muse Glimmer rule in the chat-template auto-detection table. Pass both flags explicitly, as every command on SGLang's own page does.
+> SGLang's page says the `muse` reasoning and tool-call parsers are "enabled by default". On `main` as it stands, `tool_call_parser` defaults to `None` in `server_args.py` and there is no Muse Glimmer rule in the chat-template auto-detection table. Pass both flags explicitly, as every command on SGLang's own page does.
 
 Once a server is up, this is the check:
 
@@ -202,7 +202,7 @@ curl -s http://localhost:30000/v1/chat/completions \
          "parameters":{"type":"object","properties":{
            "city":{"type":"string"},"units":{"type":"string","enum":["celsius","fahrenheit"]}},
            "required":["city"]}}}],
-       "tool_choice":"auto","temperature":0}'
+       "tool_choice":"auto","temperature":1}'
 ```
 
 A working parser returns a `tool_calls` array with `get_weather(city="Paris", units="celsius")` and the thinking under `reasoning_content`. Treat tool calling as unverified until that is confirmed here.

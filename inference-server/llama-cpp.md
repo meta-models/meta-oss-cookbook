@@ -124,7 +124,7 @@ You can use `llama cli` to interact with the model through CLI.
 llama cli -hf serve -hf meta-models/Muse-Glimmer-30B-GGUF -c 32768 -st
 ```
 
-`-st` / `--single-turn` answers once and exits. Without it `llama cli` stays interactive and waits on stdin, which reads as a hang.
+`-st` / `--single-turn` answers once and exits. Without it, `llama cli` stays interactive and waits on stdin.
 
 ## Verify tool calling
 

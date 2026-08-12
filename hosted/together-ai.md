@@ -150,4 +150,3 @@ Together also reports serving the model quantized to fp8 (MLP-only blockwise e4m
 - Docs: https://docs.together.ai
 - Pricing: https://www.together.ai/pricing
 - Issues: https://www.together.ai/support
-- Maintainer: Mourya Vangala Srinivasa (msrinivasa@together.ai)

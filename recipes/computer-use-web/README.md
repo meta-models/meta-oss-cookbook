@@ -28,7 +28,7 @@ Follow [`../../inference-server/llama-cpp.md`](../../inference-server/llama-cpp.
 Llama.cpp automatically downloads, caches and serves models with the command `llama serve -hf`. Muse Glimmer supports a native context of **131072**:
 
 ```bash
-llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"high"}' -np 1 -a muse-glimmer
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reasoning_strength":"high"}' -a muse-glimmer
 ```
 
 - `-a muse-glimmer` is the name the API answers to, and it has to match the `--model muse-glimmer` set in step 4. Without it the alias is the checkpoint path and the request does not match.

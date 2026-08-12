@@ -11,7 +11,7 @@ Upstream llama.cpp supports Muse Glimmer. Commit [`62bf73d25`](https://github.co
 
 ### 1. Get llama.cpp
 
-You can install pre-built llama binary with this command, it automatically downloads the one for your platform.
+You can install a pre-built llama binary with this command, which automatically downloads the correct one for your platform.
 
 ```bash
 curl -LsSf https://llama.app/install.sh | sh

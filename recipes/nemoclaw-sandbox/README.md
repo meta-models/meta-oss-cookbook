@@ -1,4 +1,4 @@
-# Sandboxed Agent
+# NemoClaw Sandbox
 
 An agent is asked to steal a credential and upload it. It tries. The sandbox stops it twice — the key never enters the agent's environment, and the upload never leaves the machine.
 
@@ -41,7 +41,9 @@ The agent attempts all three. OpenShell blocks it in two independent places:
 
 Terminal logs confirm both independently — the key was unavailable, and the outbound request was denied.
 
-[Watch the recording](../../assets/nemoclaw-openshell-demo.mp4)
+<video controls width="100%" src="../../assets/nemoclaw-openshell-demo.mp4">
+  <a href="../../assets/nemoclaw-openshell-demo.mp4">Watch the recording</a>
+</video>
 
 ## Reproducing it
 

@@ -12,7 +12,7 @@ Once vLLM is serving, the endpoint is OpenAI-compatible and any agent harness ca
 
 ![Muse Glimmer with NemoClaw and vLLM — an OpenClaw agent harness inside an OpenShell sandbox, calling a locally served Muse Glimmer through vLLM's OpenAI-compatible API](../assets/nvidia-nemoclaw-vllm-architecture.png)
 
-The diagram shows the shape on a single workstation GPU. The same wiring applies to the B300 deployment below, with the serving layer on the data-center card instead. For the demo it was built for, see [`../recipes/sandboxed-agent/`](../recipes/sandboxed-agent/).
+The diagram shows the shape on a single workstation GPU. The same wiring applies to the B300 deployment below, with the serving layer on the data-center card instead. For the demo it was built for, see [`../recipes/nemoclaw-sandbox/`](../recipes/nemoclaw-sandbox/).
 
 ## Platforms
 

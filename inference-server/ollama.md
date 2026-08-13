@@ -10,7 +10,6 @@ Install Ollama from [ollama.com/download](https://ollama.com/download).
 
 ## Run Muse Glimmer
 
-For the normal/default path, run:
 
 ```bash
 ollama run muse-glimmer

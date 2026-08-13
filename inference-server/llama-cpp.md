@@ -28,8 +28,8 @@ llama serve -hf meta-models/Muse-Glimmer-30B-GGUF --chat-template-kwargs '{"reas
 You can specify which quantization you want to serve by passing a quant suffix.
 
 ```bash
-llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb
-llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-dynamic
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M
+llama serve -hf meta-models/Muse-Glimmer-30B-GGUF:Q4_K_XL
 ```
 
 You can run llama.cpp with DFlash speculative decoding as follows.
@@ -41,6 +41,8 @@ llama serve \
   --spec-type draft-dflash \
   --spec-draft-n-max 4
 ```
+
+Once served, head to http://localhost:8080 to use **Llama WebUI** to chat with Muse Glimmer conveniently with multimodality, MCP support and more. 
 
 
 | Flag | Why |

@@ -1,6 +1,6 @@
 # Ollama
 
-Run Muse Glimmer locally with one command, then connect it to an agent or either of Ollama's chat APIs.
+Run Muse Glimmer locally with one command, then connect it to an agent or access it via Ollama's API.
 
 ![Launching Pi with Muse Glimmer through Ollama](../assets/ollama-launch-pi-muse-glimmer.png)
 
@@ -21,9 +21,9 @@ On Apple silicon, you can instead use Ollama's MLX engine:
 ollama run muse-glimmer:30b-mlx
 ```
 
-## Use Ollama Launch
+## Power coding apps with Muse Glimmer
 
-[`ollama launch`](https://docs.ollama.com/integrations) configures a supported agent to use Ollama, selects Muse Glimmer, and starts the agent:
+Ollama can configure coding agents like `claude`, `pi` and other long-running agents to be run with Muse Glimmer:
 
 ```bash
 ollama launch claude --model muse-glimmer

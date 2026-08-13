@@ -1,35 +1,76 @@
 # Ollama
 
-One command to a local Muse Glimmer, from a prebuilt quantized GGUF.
+Run Muse Glimmer locally with one command, then connect it to an agent or either of Ollama's chat APIs.
 
-> [!NOTE]
-> Status: pending verified content. This page is seeded with the shared section order so a verified quickstart can drop straight in. For tool calling today, use [`vllm.md`](vllm.md).
+![Launching Pi with Muse Glimmer through Ollama](../assets/ollama-launch-pi-muse-glimmer.png)
 
 ## Install
 
 Install Ollama from [ollama.com/download](https://ollama.com/download).
 
-## Serve
+## Run Muse Glimmer
+
+For the normal/default path, run:
 
 ```bash
-ollama run muse-glimmer     # exact tag TBD
+ollama run muse-glimmer
 ```
 
-Ollama exposes an OpenAI-compatible endpoint on `:11434/v1`.
+On Apple silicon, you can instead use Ollama's MLX engine:
 
-## Verify tool calling
+```bash
+ollama run muse-glimmer:30b-mlx
+```
 
-Not yet verified. Ollama's default templates may not emit Muse Glimmer's tool-block framing — until that's confirmed, point agentic recipes at vLLM ([`vllm.md`](vllm.md)).
+## Use Ollama Launch
 
-## Stop tokens
+[`ollama launch`](https://docs.ollama.com/integrations) configures a supported agent to use Ollama, selects Muse Glimmer, and starts the agent:
 
-Muse Glimmer needs `eos_token_id = [<|end_of_text|>, <|eot|>]`. Never stop on `<|eom|>`. See [`README.md`](README.md#get-stop-tokens-right).
+```bash
+ollama launch claude --model muse-glimmer
+ollama launch pi --model muse-glimmer
+ollama launch opencode --model muse-glimmer
+ollama launch hermes --model muse-glimmer
+ollama launch openclaw --model muse-glimmer
+```
+
+## Call the API
+
+Ollama listens on `http://localhost:11434` by default. The native chat API needs no API key:
+
+```bash
+curl http://localhost:11434/api/chat -d '{
+  "model": "muse-glimmer",
+  "stream": false,
+  "messages": [
+    {"role": "user", "content": "In one sentence, what is Muse Glimmer good at?"}
+  ]
+}'
+```
+
+OpenAI clients can use the compatible chat-completions endpoint. `ollama` is a placeholder API key for local clients that require one:
+
+```bash
+curl http://localhost:11434/v1/chat/completions \
+  -H 'Authorization: Bearer ollama' \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model": "muse-glimmer",
+    "messages": [
+      {"role": "user", "content": "In one sentence, what is Muse Glimmer good at?"}
+    ]
+  }'
+```
 
 ## Troubleshooting
 
-Filled in once a verified run lands.
+Muse Glimmer requires Ollama 0.32.7 or later. Check your version with:
+
+```bash
+ollama --version
+```
 
 ## Next steps
 
-- Serve with the verified path instead: [`vllm.md`](vllm.md)
-- Learn the loop: [`../agentic-fundamentals/`](../agentic-fundamentals/)
+- Learn the agent loop: [`../agentic-fundamentals/`](../agentic-fundamentals/)
+- Compare other runtimes: [`README.md`](README.md)

@@ -28,27 +28,61 @@ pip install -r examples/llm_server/python/requirements.txt
 
 ### 1. Get the assets
 
-Exports lower directly from the quantized GGUFs — the same files [`llama-cpp.md`](llama-cpp.md) uses — plus tokenizer metadata from the safetensors repo. Run from the ExecuTorch repository root:
+Exports lower directly from the quantized GGUFs — the same files [`llama-cpp.md`](llama-cpp.md) uses — plus tokenizer metadata from the safetensors repo. Run from the ExecuTorch repository root and download **one** target model.
+
+**Option A: K-Quant-17GB** — targets 24 GB of VRAM:
 
 ```bash
-hf download meta-models/Muse-Glimmer-30B-GGUF --local-dir assets/quant \
-  --include 'muse-glimmer-30B-kquant-17gb.gguf' \
-  --include 'dflash-kquant.gguf' \
-  --include 'mmproj-kquant.gguf'
+hf download meta-models/Muse-Glimmer-30B-GGUF \
+  --include 'Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf' \
+  --local-dir assets/quant
 
+TARGET=assets/quant/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf
+```
+
+**Option B: K-Quant-Dynamic** — targets 32 GB of VRAM with less degradation:
+
+```bash
+hf download meta-models/Muse-Glimmer-30B-GGUF \
+  --include 'Muse-Glimmer-30B-KQuant-Dynamic-Q4_K_XL.gguf' \
+  --local-dir assets/quant
+
+TARGET=assets/quant/Muse-Glimmer-30B-KQuant-Dynamic-Q4_K_XL.gguf
+```
+
+Download only the optional companions your export needs.
+
+For DFlash speculative decoding:
+
+```bash
+hf download meta-models/Muse-Glimmer-30B-GGUF \
+  --include 'dflash-Muse-Glimmer-30B-Q4_K_M.gguf' \
+  --local-dir assets/quant
+
+DRAFT=assets/quant/dflash-Muse-Glimmer-30B-Q4_K_M.gguf
+```
+
+For image input:
+
+```bash
+hf download meta-models/Muse-Glimmer-30B-GGUF \
+  --include 'mmproj-Muse-Glimmer-30B-Q4_K_M.gguf' \
+  --local-dir assets/quant
+
+MMPROJ=assets/quant/mmproj-Muse-Glimmer-30B-Q4_K_M.gguf
+```
+
+Tokenizer metadata is required for both targets:
+
+```bash
 hf download meta-models/Muse-Glimmer-30B \
   tokenizer.json chat_template.jinja config.json processor_config.json \
   --local-dir assets/hf
-```
 
-`chat_template.jinja` must stay beside the tokenizer metadata; the serving path renders prompts and tool definitions with it.
-
-```bash
-TARGET=assets/quant/muse-glimmer-30B-kquant-17gb.gguf
-DRAFT=assets/quant/dflash-kquant.gguf
-MMPROJ=assets/quant/mmproj-kquant.gguf
 BACKEND=cuda   # mlx on macOS
 ```
+
+`chat_template.jinja` must stay beside the tokenizer metadata; the serving path renders prompts and tool definitions with it. Choose one target GGUF per export. The DFlash and vision files are optional companions shared by both targets. The repository retains legacy compatibility copies, but these commands download only the canonical files selected above.
 
 ### 2. Export
 

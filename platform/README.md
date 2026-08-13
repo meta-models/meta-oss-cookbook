@@ -11,7 +11,8 @@ Deployment guides for specific hardware, contributed by the partners who build i
 | Intel | Arc Pro GPU (consumer) | consumer | Arc Pro B Series | 32 GB GDDR6 | bf16, int4 | [`intel.md`](intel.md#arc-pro-gpu-consumer) |
 | Intel | Arc Pro GPU (server) | server | Arc Pro B70 x 2 | 32 GB LPDDR5 per accelerator | bf16 | [`intel.md`](intel.md#arc-pro-gpu-server) |
 | Intel | Intel Core Ultra Series 2 and 3 | consumer | iGPU | 32GB+ | q4_k_m, int4 | [`intel.md`](intel.md#intel-core-ultra-series-2-and-3) |
-| Intel | Xeon 6 6980P | server | N/A |  | bf16 | [`intel.md`](intel.md#xeon-6-6980p) |
+| Intel | Xeon 6 6980P | server | N/A | depends on DDR5 mounted, suggest to > 512 GB | bf16 | [`intel.md`](intel.md#xeon-6-6980p) |
+| NVIDIA | B300 | server | B300 × 8 | 288 GB HBM3e per GPU | bf16 | [`nvidia.md`](nvidia.md#b300) |
 
 <!-- END:INDEX -->
 

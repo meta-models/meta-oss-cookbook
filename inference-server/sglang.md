@@ -84,7 +84,7 @@ This is the one combination SGLang publishes for a 32 GB card. `--model-path` po
 
 ```bash
 sglang serve \
-  --model-path meta-models/Muse-Glimmer-30B-GGUF/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf \
+  --model-path meta-models/Muse-Glimmer-30B-GGUF/muse-glimmer-30B-kquant-17gb.gguf \
   --served-model-name muse-glimmer \
   --reasoning-parser muse \
   --tool-call-parser muse \
@@ -159,7 +159,7 @@ Two target-specific additions, both called out by SGLang:
 - **GGUF target** also needs `--speculative-draft-load-format auto`. Without it the draft inherits the `gguf` load format from the target and the loader rejects the draft directory.
 - **NVFP4 target** also takes `--speculative-draft-model-quantization fp8`.
 
-There is also a **GGUF draft**, `dflash-Muse-Glimmer-30B-Q4_K_M.gguf`, shipped in the GGUF repo and verified by SGLang on B300. It has a silent failure mode worth knowing about: pass `--speculative-draft-model-quantization gguf` explicitly, or draft quantization resolves before the target's lazy `gguf` load format and the draft is built unquantized from random init. Nothing errors — the draft loads, speculation runs, and the accept length simply sits at 1.0 with no speedup. On every platform except B300 the verified draft is the native `meta-models/Muse-Glimmer-30B-assistant` export, which needs none of this.
+There is also a **GGUF draft**, `dflash-kquant.gguf`, shipped in the GGUF repo and verified by SGLang on B300. It has a silent failure mode worth knowing about: pass `--speculative-draft-model-quantization gguf` explicitly, or draft quantization resolves before the target's lazy `gguf` load format and the draft is built unquantized from random init. Nothing errors — the draft loads, speculation runs, and the accept length simply sits at 1.0 with no speedup. On every platform except B300 the verified draft is the native `meta-models/Muse-Glimmer-30B-assistant` export, which needs none of this.
 
 DFlash is not available on the MLX backend.
 

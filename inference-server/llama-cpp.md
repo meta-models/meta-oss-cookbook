@@ -37,7 +37,8 @@ You can run llama.cpp with DFlash speculative decoding as follows.
 ```bash
 llama serve \
   -hf meta-models/Muse-Glimmer-30B-GGUF:kquant-17gb \
-  --hf-repo-draft meta-models/Muse-Glimmer-30B-GGUF:dflash-kquant \
+llama serve \
+-hf meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M \
   --spec-type draft-dflash \
   --spec-draft-n-max 4
 ```

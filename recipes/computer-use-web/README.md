@@ -8,13 +8,13 @@ It works the way a person does: look at the screen, decide where to click, click
 
 | | |
 |---|---|
-| Precision | Quantized GGUF — dynamic K-quant (`muse-glimmer-30B-kquant-dynamic.gguf`, ~20 GB on disk) |
+| Precision | Quantized GGUF — dynamic K-quant (`Muse-Glimmer-30B-KQuant-Dynamic-Q4_K_XL.gguf`, ~20 GB on disk) |
 | Model server | llama.cpp (upstream, release `b10353` or newer) |
 | Offline? | Model runs locally; the task itself browses the web |
 | Requires | [metacua](https://github.com/meta-models/meta-model-cookbook/tree/main/03_use_cases/13_macos_cua) · macOS with Safari |
 
 > [!NOTE]
-> Status: not verified on this checkpoint. The walkthrough below was worked out on a different GGUF from the same repo. The llama.cpp flags and the metacua setup do not depend on which of the published checkpoints you load, so those carry over — but no measurement from that run does, which is why this banner publishes none. What *is* confirmed: `muse-glimmer-30B-kquant-dynamic.gguf` and `mmproj-kquant.gguf` are published in [`meta-models/Muse-Glimmer-30B-GGUF`](https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF), and llama.cpp `b10353` or newer loads this architecture. What is *not* confirmed: peak memory on this build, or that the agent loop runs end to end on it. If you complete a run, please say so in an issue so we can upgrade this banner.
+> Status: not verified on this checkpoint. The walkthrough below was worked out on a different GGUF from the same repo. The llama.cpp flags and the metacua setup do not depend on which of the published checkpoints you load, so those carry over — but no measurement from that run does, which is why this banner publishes none. What *is* confirmed: `Muse-Glimmer-30B-KQuant-Dynamic-Q4_K_XL.gguf` and `mmproj-Muse-Glimmer-30B-Q4_K_M.gguf` are published in [`meta-models/Muse-Glimmer-30B-GGUF`](https://huggingface.co/meta-models/Muse-Glimmer-30B-GGUF), and llama.cpp `b10353` or newer loads this architecture. What is *not* confirmed: peak memory on this build, or that the agent loop runs end to end on it. If you complete a run, please say so in an issue so we can upgrade this banner.
 
 > [!CAUTION]
 > `metacua` takes real control of your Mac — it moves the pointer, types, and clicks whatever the model decides, with no confirmation step. Keep the terminal reachable so you can `Ctrl+C`, and don't type in other apps while it runs. Web pages can also prompt-inject the agent, so prefer sites you trust.

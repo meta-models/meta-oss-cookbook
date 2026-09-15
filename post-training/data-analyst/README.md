@@ -16,17 +16,42 @@ external services.
 | Max VRAM observed | ~88 GB/GPU on the training GPUs (peak, post-optimizer-allocation) |
 | Requires | [TorchTitan](https://github.com/pytorch/torchtitan) **pinned at `8108e201a`** + TitanRL deps (Monarch, TorchStore, vLLM, FlashAttention-3) |
 
-> **Measured result.** Over 10 GRPO steps on the public 30B checkpoint, mean
-> rollout reward went from **0.20 to 0.88** -- the model learns to run a working
-> command and write the answer file. Zero OOMs, zero collective timeouts.
-> ([W&B run](https://wandb.ai/a-shamsoshoara-m/titan_rl/runs/bo0fjdsh).) That is
-> a short run showing a clear trend, not a convergence study; a longer curve and
-> a before/after benchmark comparison are still to come, and this page will not
-> claim numbers it has not measured.
->
 > **You must pin TorchTitan to `8108e201a`.** On current `main` this recipe --
 > and upstream's own `rl_grpo_muse_glimmer_30b_search_r1` -- runs out of memory
 > during weight sync. See [Pinning TorchTitan](#pinning-torchtitan).
+
+## Does it work?
+
+Mean rollout reward over a run on the public 30B checkpoint, 8 prompts x 8
+samples per step:
+
+![Mean rollout reward per GRPO step, rising from 0.31 at step 1 to 0.99 at step 16](../../assets/glimmer-data-analyst-reward.png)
+
+More useful than the reward line is *why* it rises. Grouping every rollout by
+how it ended, across the run:
+
+![Stacked area chart of rollout outcomes over training: completed rises from 26% to 84% while rollouts that ran out of tokens mid-answer fall from 38% to zero](../../assets/glimmer-data-analyst-outcomes.png)
+
+Rollouts that **ran out of tokens mid-answer go from 38% to 0%**, and completions
+go from 26% to 84%. That is the PinchBench failure mode being trained away: the
+model stops rambling through a long recovery and starts computing the number and
+writing it in the same command.
+
+### Read this part before you trust the curve
+
+**The run stops at step 16, and that is the task saturating, not a crash.** By
+the end every rollout in a group scores 1.0, so GRPO has no reward variance left,
+and TitanRL's batcher correctly aborts with `10 consecutive untrainable batches`.
+
+That is a genuine limitation of the **task**, not the machinery: these four
+synthetic templates are learnable in ~16 steps and then stop teaching anything.
+It makes a fast, legible demo -- you see the whole learning curve in under an
+hour -- but it is not a convergence study, and the final policy has not been
+stressed. If you want a long run, make the tasks harder first (see
+[Make it yours](#make-it-yours)).
+
+No before/after benchmark comparison is published here, because we have not run
+one. ([W&B](https://wandb.ai/a-shamsoshoara-m/titan_rl).)
 
 ## The problem this solves
 
@@ -163,6 +188,13 @@ tiers make a partially-competent attempt outrank a flailing one -- while keeping
 correctness strictly dominant, so partial credit can never beat a right answer.
 
 ## Make it yours
+
+**Make the tasks harder.** The shipped templates saturate in ~16 steps (see
+above). For a longer run, add instances the model cannot solve in one command:
+multi-step aggregations, joins across columns, malformed rows that have to be
+handled, ambiguous schemas that need inspection first. A difficulty curriculum
+-- easy instances early, harder ones once reward climbs -- keeps reward variance
+alive, which is what GRPO needs.
 
 **Swap in your own task.** Add a template to `data.py`. It needs to return a
 `GlimmerDataAnalystSample`: the prompt, the input filename and contents, and the

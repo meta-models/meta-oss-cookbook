@@ -24,6 +24,7 @@ A local agent running on your own machine that completes a real multi-step task,
 | Serve Muse Glimmer (vLLM, Ollama, LM Studio, SGLang, llama.cpp, Unsloth, ExecuTorch) | [`inference-server/`](inference-server/) |
 | Deploy on specific partner hardware, and see which precisions it supports | [`platform/`](platform/) |
 | Call a hosted API instead of running the model yourself (needs a provider API key) | [`hosted/`](hosted/) |
+| Train the model further on your own task (RL post-training with TitanRL) | [`post-training/`](post-training/) |
 
 ## How every recipe is built
 

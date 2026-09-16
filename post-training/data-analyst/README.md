@@ -53,6 +53,81 @@ stressed. If you want a long run, make the tasks harder first (see
 No before/after benchmark comparison is published here, because we have not run
 one. ([W&B](https://wandb.ai/a-shamsoshoara-m/titan_rl).)
 
+## What the model actually does, before and after
+
+Both transcripts below are real rollouts from the run above, on the same task
+family (count log lines at a given level). "Before" is from the first training
+groups, so the policy has had no gradient update yet.
+
+### Before: deliberates, never acts
+
+````text
+PROMPT
+  The file `access.log` ... Count how many lines have level `WARN`.
+  Write the count to `answer.json` as JSON: {"answer": <number>}.
+
+ASSISTANT  (reasoning: 1674 chars, content: empty, tool calls: NONE)
+  "We need to count lines with level WARN. Probably format: timestamp level ...
+   Could be like "2023-... WARN ..." Or start with timestamp and a level.
+   Let's inspect file first? Might need to know exact pattern. Could just grep
+   for ' WARN ' or 'WARN' after timestamp. Safer to view first few lines.
+   Might need one tool call to count and write file in same command..."
+
+  -> truncated_length (hit the token cap mid-thought)
+  -> reward 0.0
+````
+
+It reasons itself in circles about which approach to take and never emits a
+single tool call. No command runs, no file is written.
+
+### After: inspects, computes and writes in one command, verifies, stops
+
+````text
+PROMPT
+  The file `access.log` ... Count how many lines have level `DEBUG`.
+  Write the count to `answer.json` as JSON: {"answer": <number>}.
+
+TURN 0  (reasoning: 518 chars)
+  bash: head -n 5 access.log && wc -l access.log
+  -> 2026-08-01T00:00:00Z INFO 10.0.4.3 request handled ...
+
+TURN 1  (reasoning: 489 chars)
+  bash: count=$(grep -c ' DEBUG ' access.log); echo "{\"answer\": $count}" > answer.json; cat answer.json
+  -> {"answer": 12}
+  -> file_exists 1.0, file_parses 1.0, correct 1.0
+
+TURN 2  (reasoning: 187 chars)
+  bash: awk '$2=="DEBUG"{c++} END{print c}' access.log
+  -> 12                                    # cross-checks with a second method
+
+TURN 3  (reasoning: 78 chars)
+  (no tool call -- done)
+  -> completed, reward 1.0
+````
+
+Three behaviors were learned here, and all three are the PinchBench failure modes
+inverted: it **checks the format first** instead of guessing, it **computes and
+persists in the same command** rather than computing and forgetting to write, and
+it **stops** once verified rather than burning the remaining turns. The
+self-check in turn 2 (`awk` confirming the `grep -c` result) was not asked for.
+
+Reasoning also shortens as the rollout proceeds -- 518 -> 489 -> 187 -> 78 chars
+-- rather than expanding, which is the thrash pattern the anti-repeat penalty
+targets.
+
+### This is not cherry-picked
+
+Across the first 122 and last 120 training rollouts:
+
+| | before | after |
+|---|---|---|
+| rollouts making **zero tool calls** (deliberate, never act) | **32%** | **0%** |
+| median first-turn reasoning | 684 chars | 522 chars |
+| median tool calls per rollout | 4 | 4 |
+
+The tool-call count is unchanged -- the model was never lazy, it was stuck. What
+changed is that it now reliably *starts*, and finishes.
+
 ## The problem this solves
 
 Muse Glimmer scores ~65% overall on PinchBench (a 147-task agentic benchmark) but

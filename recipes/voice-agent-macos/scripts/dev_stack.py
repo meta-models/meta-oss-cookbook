@@ -47,6 +47,7 @@ HTTP_ENDPOINTS = {
     "token": "http://127.0.0.1:8787/healthz",
     "web": "http://127.0.0.1:5173",
 }
+_METAL_CACHE_KEY = re.compile(r"^[A-Z0-9]+$")
 
 
 @dataclass(frozen=True)
@@ -135,6 +136,41 @@ def _base_environment() -> dict[str, str]:
         "HF_HUB_OFFLINE": "1",
         "TRANSFORMERS_OFFLINE": "1",
     }
+
+
+def _prepare_metal_compiler_cache(cache_root: Path | None = None) -> None:
+    if cache_root is None:
+        result = subprocess.run(
+            ["getconf", "DARWIN_USER_CACHE_DIR"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        cache_root = Path(result.stdout.strip()) / "com.apple.metalfe"
+    cache_root.mkdir(exist_ok=True)
+    if cache_root.is_symlink():
+        raise RuntimeError(f"Metal compiler cache must not be a symlink: {cache_root}")
+
+    # The parent DARWIN_USER_CACHE_DIR is mode 0700. Metal's XPC compiler still
+    # needs write access as a separate sandbox identity within that private tree.
+    cache_root.chmod(0o777)
+    subprocess.run(
+        ["xattr", "-d", "com.apple.quarantine", str(cache_root)],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    for candidate in cache_root.iterdir():
+        if (
+            not _METAL_CACHE_KEY.fullmatch(candidate.name)
+            or candidate.is_symlink()
+            or not candidate.is_dir()
+        ):
+            continue
+        candidate.chmod(0o777)
+        for name in ("modules.idx", "monolithic_metal.pcm"):
+            (candidate / name).unlink(missing_ok=True)
 
 
 def _artifact(receipt: dict[str, object], role: str) -> str:
@@ -465,6 +501,7 @@ def _up_locked() -> None:
             "a managed stack or orphaned process group is still running; use `make down`"
         )
     _assert_ports_available()
+    _prepare_metal_compiler_cache()
     receipt = load_valid_receipt()
     api_key, api_secret = _new_credentials()
     records: dict[str, object] = {}

@@ -107,6 +107,24 @@ def test_base_environment_forces_model_libraries_offline(
     assert environment["TRANSFORMERS_OFFLINE"] == "1"
 
 
+def test_prepare_metal_compiler_cache_removes_stale_modules(tmp_path: Path) -> None:
+    cache_root = tmp_path / "com.apple.metalfe"
+    active = cache_root / "3GSOGMCJ0ABAS"
+    backup = cache_root / "3GSOGMCJ0ABAS.stale"
+    active.mkdir(parents=True)
+    backup.mkdir()
+    for name in ("modules.idx", "monolithic_metal.pcm"):
+        (active / name).write_text("stale")
+        (backup / name).write_text("preserved")
+    dev_stack._prepare_metal_compiler_cache(cache_root)
+
+    assert cache_root.stat().st_mode & 0o777 == 0o777
+    assert active.stat().st_mode & 0o777 == 0o777
+    assert not (active / "modules.idx").exists()
+    assert not (active / "monolithic_metal.pcm").exists()
+    assert (backup / "modules.idx").read_text() == "preserved"
+
+
 def test_credentials_are_private_before_secret_is_written(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

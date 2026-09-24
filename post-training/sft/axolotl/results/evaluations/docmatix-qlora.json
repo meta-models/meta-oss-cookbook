@@ -1,0 +1,26 @@
+{
+  "base_model": "meta-models/Muse-Glimmer-30B",
+  "base_model_revision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
+  "counterfactual_mode": "original",
+  "current_date": "2026-09-17",
+  "empty_user_responses": 0,
+  "example_count": 16,
+  "generation_seed": 42,
+  "label": "docmatix-qlora",
+  "load_in_4bit": true,
+  "max_new_tokens": 512,
+  "metrics": {
+    "normalized_exact_match": 0.125,
+    "token_f1": 0.6532020306303983
+  },
+  "model_kind": "qlora",
+  "reasoning_strength": "low",
+  "schema_version": 1,
+  "selected_ids_sha256": "49eac1e13c60680376366f52fea8c8070f040ca4824dfc690f468dccecca2762",
+  "selection_seed": 42,
+  "trained_artifact": {
+    "method": "qlora",
+    "step": 32,
+    "wandb_run_id": "2w8rql9f"
+  }
+}

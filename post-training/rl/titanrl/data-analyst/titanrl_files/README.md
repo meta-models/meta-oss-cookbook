@@ -4,9 +4,17 @@ These are the recipe's TitanRL files. Copy the whole directory into a TorchTitan
 checkout as a new RL example:
 
 ```bash
-git -C <torchtitan> checkout 8108e201a   # see the recipe's "Pinning TorchTitan"
-cp -r titanrl_files \
-  <torchtitan>/torchtitan/experiments/rl/examples/glimmer_data_analyst
+COOKBOOK=/absolute/path/to/meta-oss-cookbook
+cd <torchtitan>
+git checkout 8108e201a   # see the recipe's "Pinning TorchTitan"
+TARGET=torchtitan/experiments/rl/examples/glimmer_data_analyst
+if [[ -e "$TARGET" ]]; then
+  echo "refusing to replace existing $TARGET" >&2
+  exit 1
+fi
+cp -R \
+  "$COOKBOOK/post-training/rl/titanrl/data-analyst/titanrl_files" \
+  "$TARGET"
 ```
 
 Then register the module so `--module glimmer_data_analyst` resolves, by adding

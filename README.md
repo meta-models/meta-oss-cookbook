@@ -1,6 +1,8 @@
 # Muse Glimmer Cookbook
 
-Clone it, run it on the GPU you already own, and ship a working agent — one that plans, calls tools, and self-corrects — in a single sitting, fully offline.
+Clone it, run it on the GPU you already own, and ship a working agent in a
+single sitting. Most inference paths run fully offline after setup;
+post-training pages identify their download and tracking requirements.
 
 Muse Glimmer is an open-weight model built for local agentic work on a single GPU. This cookbook is how you go from weights to a running agent.
 
@@ -24,13 +26,15 @@ A local agent running on your own machine that completes a real multi-step task,
 | Serve Muse Glimmer (vLLM, Ollama, LM Studio, SGLang, llama.cpp, Unsloth, ExecuTorch) | [`inference-server/`](inference-server/) |
 | Deploy on specific partner hardware, and see which precisions it supports | [`platform/`](platform/) |
 | Call a hosted API instead of running the model yourself (needs a provider API key) | [`hosted/`](hosted/) |
-| Train the model further on your own task (RL post-training with TitanRL) | [`post-training/`](post-training/) |
+| Train further with SFT or RL (downloads required for setup) | [`post-training/`](post-training/) |
 
 ## How every recipe is built
 
 Each recipe follows the same contract so you always know what you're getting:
 
-- **Runs end to end, offline**: Any network use is optional and flagged.
+- **Runs offline after setup**: Inference recipes run locally after required
+  artifacts are cached. Post-training additionally downloads dependencies and
+  datasets, and its pages flag online experiment tracking when enabled.
 - **Recipe banner up top**: Precision, model server, and the max VRAM we observed, before you run anything. We don't publish numbers for hardware we haven't run on — where a recipe hasn't been measured, its banner says so instead of estimating.
 - **Precision and server vary by recipe**: Most are bf16 on vLLM; [`recipes/computer-use-web/`](recipes/computer-use-web/) is a quantized GGUF on llama.cpp. Other combinations generally work; we just don't re-verify every recipe against each one.
 - **Copy-paste first**: One command to run. The explanation comes after.

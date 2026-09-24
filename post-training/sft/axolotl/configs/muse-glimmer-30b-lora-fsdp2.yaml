@@ -1,0 +1,99 @@
+# Requires Axolotl 0.19.0. Run from post-training/sft/axolotl so relative paths work.
+# Core path validated on eight H100s with a bounded Axolotl 0.19.0 smoke run.
+base_model: meta-models/Muse-Glimmer-30B
+model_revision: a4e59da52a7bc87ae7251dd5545c0dd437c44b68
+processor_type: AutoProcessor
+
+plugins:
+  - axolotl.integrations.cut_cross_entropy.CutCrossEntropyPlugin
+cut_cross_entropy: true
+
+adapter: lora
+load_in_4bit: false
+lora_r: 32
+lora_alpha: 16
+lora_dropout: 0.05
+# Target only language projections. The pretrained vision tower stays frozen.
+lora_target_modules: "model\\.language_model\\.layers\\.\\d+\\.\
+  (self_attn\\.(q|k|v|o)_proj|mlp\\.(gate|up|down)_proj)"
+# Muse's gated attention is incompatible with Axolotl's fused LoRA kernels.
+lora_mlp_kernel: false
+lora_qkv_kernel: false
+lora_o_kernel: false
+lora_embedding_kernel: false
+
+# Multimodal collation needs the original columns and unpacked examples.
+skip_prepare_dataset: true
+remove_unused_columns: false
+sample_packing: false
+eval_sample_packing: false
+train_on_inputs: false
+
+datasets:
+  - path: data/prepared/cosyn-circuit/train.jsonl
+    type: chat_template
+    field_messages: messages
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+test_datasets:
+  - path: data/prepared/cosyn-circuit/validation.jsonl
+    type: chat_template
+    split: train
+    field_messages: messages
+    roles_to_train:
+      - assistant
+    train_on_eos: turn
+
+dataset_prepared_path: data/cache/muse-glimmer-30b-lora-fsdp2
+val_set_size: 0.0
+output_dir: outputs/muse-glimmer-30b-lora-fsdp2
+
+# The multimodal collator does not truncate; prepare data with --max-tokens 4096.
+sequence_len: 4096
+pad_to_sequence_len: false
+
+# A nonempty project enables W&B. WANDB_API_KEY belongs in the environment.
+wandb_project: muse-glimmer-sft
+wandb_entity:
+wandb_name: muse-glimmer-30b-lora-fsdp2
+wandb_mode: online
+wandb_watch:
+# Model artifact uploads are opt-in because adapters can encode private data.
+wandb_log_model:
+
+# On eight GPUs, this produces a global batch size of 32 examples.
+micro_batch_size: 1
+gradient_accumulation_steps: 4
+num_epochs: 1
+optimizer: adamw_torch_fused
+lr_scheduler: cosine
+learning_rate: 0.00005
+
+bf16: true
+fp16: false
+tf32: true
+
+logging_steps: 1
+include_tkps: true
+attn_implementation: flash_attention_2
+
+warmup_ratio: 0.1
+eval_strategy: epoch
+save_strategy: epoch
+save_total_limit: 2
+weight_decay: 0.0
+seed: 42
+
+# FSDP2 keeps BF16 base weights and optimizer state sharded across eight GPUs.
+# Wrapping only text decoder blocks follows the trainable LoRA placement.
+fsdp_version: 2
+fsdp_config:
+  offload_params: false
+  cpu_ram_efficient_loading: false
+  auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  transformer_layer_cls_to_wrap: MuseGlimmerTextDecoderLayer
+  state_dict_type: SHARDED_STATE_DICT
+  reshard_after_forward: true
+  # Axolotl 0.19.0 otherwise leaks checkpoint-wrapper names into the adapter.
+  activation_checkpointing: false

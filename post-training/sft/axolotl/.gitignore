@@ -1,0 +1,8 @@
+.venv/
+outputs/
+data/cache/
+data/preflight/
+data/smoke/
+wandb/
+.pytest_cache/
+__pycache__/

@@ -25,12 +25,12 @@ external services.
 Mean rollout reward over a run on the public 30B checkpoint, 8 prompts x 8
 samples per step:
 
-![Mean rollout reward per GRPO step, rising from 0.31 at step 1 to 0.99 at step 16](../../assets/glimmer-data-analyst-reward.png)
+![Mean rollout reward per GRPO step, rising from 0.31 at step 1 to 0.99 at step 16](../../../../assets/glimmer-data-analyst-reward.png)
 
 More useful than the reward line is *why* it rises. Grouping every rollout by
 how it ended, across the run:
 
-![Stacked area chart of rollout outcomes over training: completed rises from 26% to 84% while rollouts that ran out of tokens mid-answer fall from 38% to zero](../../assets/glimmer-data-analyst-outcomes.png)
+![Stacked area chart of rollout outcomes over training: completed rises from 26% to 84% while rollouts that ran out of tokens mid-answer fall from 38% to zero](../../../../assets/glimmer-data-analyst-outcomes.png)
 
 Rollouts that **ran out of tokens mid-answer go from 38% to 0%**, and completions
 go from 26% to 84%. That is the PinchBench failure mode being trained away: the
@@ -162,6 +162,7 @@ python -m torchtitan.experiments.rl.train \
 **1. Get TorchTitan and the RL dependencies.**
 
 ```bash
+COOKBOOK=/absolute/path/to/meta-oss-cookbook
 git clone https://github.com/pytorch/torchtitan.git
 cd torchtitan
 git checkout 8108e201a       # required -- see "Pinning TorchTitan" below
@@ -188,7 +189,41 @@ uv pip install \
   --index-strategy unsafe-best-match
 ```
 
-**3. Download the open-weights checkpoint** (~56 GB, one time):
+**3. Install and register this recipe's TitanRL module.**
+
+The commands below run from the TorchTitan checkout and use the `COOKBOOK`
+absolute path set in step 1. See [`titanrl_files/`](titanrl_files/) for the
+source layout.
+
+```bash
+RECIPE="$COOKBOOK/post-training/rl/titanrl/data-analyst/titanrl_files"
+TARGET=torchtitan/experiments/rl/examples/glimmer_data_analyst
+if [[ -e "$TARGET" ]]; then
+  echo "refusing to replace existing $TARGET" >&2
+  exit 1
+fi
+cp -R "$RECIPE" "$TARGET"
+
+python - <<'PY'
+from pathlib import Path
+
+registry = Path("torchtitan/experiments/__init__.py")
+text = registry.read_text()
+marker = '        "search_r1",\n'
+entry = '        "glimmer_data_analyst",\n'
+if entry not in text:
+    if marker not in text:
+        raise SystemExit(f"registration marker not found in {registry}")
+    registry.write_text(text.replace(marker, marker + entry, 1))
+PY
+
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"
+pytest \
+  torchtitan/experiments/rl/examples/glimmer_data_analyst/tests/ -v
+# -> 17 passed, no GPU required
+```
+
+**4. Download the open-weights checkpoint** (~56 GB, one time):
 
 ```bash
 python scripts/download_hf_assets.py \
@@ -197,7 +232,7 @@ python scripts/download_hf_assets.py \
   --all
 ```
 
-**4. Point `PYTHONPATH` at the checkout** (Monarch-spawned workers import from it):
+**5. Point `PYTHONPATH` at the checkout** (Monarch-spawned workers import from it):
 
 ```bash
 export PYTHONPATH="$PWD:${PYTHONPATH:-}"
@@ -341,7 +376,7 @@ holding 2 GPUs, this recipe uses FSDP=3 x TP=2 across the remaining 6.
 
 ## Next steps
 
-- [`../../agentic-fundamentals/`](../../agentic-fundamentals/) -- the tool-use loop
+- [`../../../../agentic-fundamentals/`](../../../../agentic-fundamentals/) -- the tool-use loop
   and ATEM tool-call format this recipe trains against.
 - [TitanRL docs](https://github.com/pytorch/torchtitan/tree/main/torchtitan/experiments/rl)
   -- the framework: rollouters, environments, rubrics, and the async controller.

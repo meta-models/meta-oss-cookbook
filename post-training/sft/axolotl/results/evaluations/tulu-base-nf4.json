@@ -1,0 +1,22 @@
+{
+  "base_model": "meta-models/Muse-Glimmer-30B",
+  "base_model_revision": "a4e59da52a7bc87ae7251dd5545c0dd437c44b68",
+  "counterfactual_mode": "original",
+  "current_date": "2026-09-17",
+  "empty_user_responses": 2,
+  "example_count": 16,
+  "generation_seed": 42,
+  "label": "tulu-base-nf4",
+  "load_in_4bit": true,
+  "max_new_tokens": 512,
+  "metrics": {
+    "normalized_exact_match": 0.0,
+    "token_f1": 0.3390844578107836
+  },
+  "model_kind": "base",
+  "reasoning_strength": "low",
+  "schema_version": 1,
+  "selected_ids_sha256": "31f15616149da3239c77ab5ff8398b9ea8d0ffaf5aa0f1d8b3e7b294a36ed09f",
+  "selection_seed": 42,
+  "trained_artifact": null
+}

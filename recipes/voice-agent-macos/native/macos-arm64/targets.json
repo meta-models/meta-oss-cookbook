@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "targets": {
+    "parakeet_helper": "parakeet_helper",
+    "muse_glimmer_worker": "muse_glimmer_worker",
+    "supertonic_runner": "supertonic_runner"
+  },
+  "required_features": {
+    "muse_glimmer_worker": ["supports_cancel"],
+    "supertonic_runner": ["server_jsonl"]
+  }
+}

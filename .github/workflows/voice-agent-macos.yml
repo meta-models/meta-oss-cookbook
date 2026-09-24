@@ -1,0 +1,199 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Muse Glimmer macOS
+
+on:
+  pull_request:
+    paths:
+      - "recipes/voice-agent-macos/**"
+      - ".github/workflows/voice-agent-macos.yml"
+  push:
+    branches: [main]
+    paths:
+      - "recipes/voice-agent-macos/**"
+      - ".github/workflows/voice-agent-macos.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: recipes/voice-agent-macos
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e
+        with:
+          enable-cache: true
+          cache-dependency-glob: recipes/voice-agent-macos/uv.lock
+      - name: Sync Python dependencies
+        run: uv sync --all-packages --all-groups --frozen
+      - name: Check Python lint
+        run: uv run --all-packages --all-groups ruff check .
+      - name: Check Python formatting
+        run: uv run --all-packages --all-groups ruff format --check .
+      - name: Run Python tests
+        run: uv run --all-packages --all-groups pytest
+      - name: Read release compatibility state
+        id: compatibility
+        run: |
+          uv run --all-packages --all-groups python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          from pathlib import Path
+
+          compatibility = json.loads(
+              Path("config/dependencies/compatibility.lock.json").read_text()
+          )
+          ready = bool(compatibility["ready_for_release"])
+          commit = compatibility["executorch"]["commit"] or ""
+          if ready and re.fullmatch(r"[0-9a-f]{40}", commit) is None:
+              raise SystemExit("release-ready compatibility requires a full commit SHA")
+          print(f"ready={str(ready).lower()}")
+          print(f"commit={commit}")
+          PY
+      - name: Check out release ExecuTorch revision
+        if: steps.compatibility.outputs.ready == 'true'
+        env:
+          EXECUTORCH_COMMIT: ${{ steps.compatibility.outputs.commit }}
+        run: |
+          test -n "$EXECUTORCH_COMMIT"
+          git clone --filter=blob:none --no-checkout \
+            https://github.com/pytorch/executorch.git \
+            "$RUNNER_TEMP/executorch"
+          git -C "$RUNNER_TEMP/executorch" checkout --detach "$EXECUTORCH_COMMIT"
+          echo "GLIMMER_EXECUTORCH_ROOT=$RUNNER_TEMP/executorch" >> "$GITHUB_ENV"
+      - name: Validate manifests
+        run: uv run --all-packages --all-groups python -m scripts.validate_manifests
+      - name: Check publication contents
+        run: uv run --all-packages --all-groups python -m scripts.publication_check
+      - name: Build Python packages
+        run: uv build --all-packages --out-dir "$RUNNER_TEMP/muse-glimmer-dist"
+      - name: Verify package LICENSE payloads
+        env:
+          DIST_DIR: ${{ runner.temp }}/muse-glimmer-dist
+        run: |
+          uv run --all-packages --all-groups python - <<'PY'
+          import os
+          import tarfile
+          import zipfile
+          from pathlib import Path
+
+          dist = Path(os.environ["DIST_DIR"])
+          expected = {
+              "livekit_plugins_executorch": Path(
+                  "packages/livekit-plugins-executorch/LICENSE"
+              ).read_bytes(),
+              "muse_glimmer_token_service": Path("apps/token-service/LICENSE").read_bytes(),
+              "muse_glimmer_worker": Path("apps/worker/LICENSE").read_bytes(),
+          }
+          archives = list(dist.glob("*.whl")) + list(dist.glob("*.tar.gz"))
+          for package, license_payload in expected.items():
+              package_archives = [archive for archive in archives if archive.name.startswith(package)]
+              if len(package_archives) != 2:
+                  raise SystemExit(
+                      f"expected wheel and sdist for {package}, found {len(package_archives)} archives"
+                  )
+              for archive in package_archives:
+                  if archive.suffix == ".whl":
+                      with zipfile.ZipFile(archive) as built:
+                          names = built.namelist()
+                          payloads = [
+                              built.read(name)
+                              for name in names
+                              if Path(name).name == "LICENSE"
+                          ]
+                  else:
+                      with tarfile.open(archive, mode="r:gz") as built:
+                          members = built.getmembers()
+                          names = [member.name for member in members]
+                          payloads = [
+                              built.extractfile(member).read()
+                              for member in members
+                              if member.isfile() and Path(member.name).name == "LICENSE"
+                          ]
+                  if license_payload not in payloads:
+                      raise SystemExit(f"source LICENSE payload missing from {archive.name}")
+                  if any(Path(name).name == "NOTICE" for name in names):
+                      raise SystemExit(f"obsolete NOTICE payload found in {archive.name}")
+          print("Verified Apache-2.0 LICENSE payloads in all Python package archives.")
+          PY
+
+  web:
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: recipes/voice-agent-macos/apps/web
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22.12.0"
+          cache: npm
+          cache-dependency-path: recipes/voice-agent-macos/apps/web/package-lock.json
+      - name: Install web dependencies
+        run: npm ci
+      - name: Lint web app
+        run: npm run lint
+      - name: Type-check web app
+        run: npm run typecheck
+      - name: Test web app
+        run: npm test
+      - name: Build web app
+        run: npm run build
+      - name: Audit web dependencies
+        run: npm audit --audit-level=high
+      - name: Scan browser bundle for private runtime data
+        run: |
+          node --input-type=module <<'JS'
+          import { readdir, readFile } from "node:fs/promises";
+          import { join } from "node:path";
+
+          const forbidden = new Map([
+            ["LLM port", /127\.0\.0\.1:8000/],
+            ["model variant", /muse-glimmer-k-quant|17G|128K|dflash/i],
+            ["model runtime", /Parakeet|Supertonic|MUSE_GLIMMER_|PARAKEET_|SUPERTONIC_/],
+            ["private path", /\/Users\/|\.local\/artifacts|\.pte\b/],
+            ["credential name", /LIVEKIT_API_SECRET/],
+            ["cloud URL", /wss:\/\/|https:\/\/[^\s"']*livekit/i],
+          ]);
+
+          async function* files(directory) {
+            for (const entry of await readdir(directory, { withFileTypes: true })) {
+              const path = join(directory, entry.name);
+              if (entry.isDirectory()) {
+                yield* files(path);
+              } else if (entry.isFile()) {
+                yield path;
+              }
+            }
+          }
+
+          for await (const path of files("dist")) {
+            const contents = await readFile(path, "utf8");
+            for (const [label, pattern] of forbidden) {
+              if (pattern.test(contents)) {
+                throw new Error(`browser bundle contains forbidden ${label}: ${path}`);
+              }
+            }
+          }
+          console.log("Browser bundle privacy scan passed.");
+          JS

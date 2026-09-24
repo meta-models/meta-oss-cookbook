@@ -231,4 +231,6 @@ The upstream [announcement](https://pytorch.org/blog/fast-ondevice-agentic-ai-wi
 
 - Compare with the reference path: [`vllm.md`](vllm.md)
 - CPU-only machine: [`llama-cpp.md`](llama-cpp.md)
+- Build a complete local voice agent on Apple silicon:
+  [`../recipes/voice-agent-macos/`](../recipes/voice-agent-macos/)
 - Learn the loop: [`../agentic-fundamentals/`](../agentic-fundamentals/)

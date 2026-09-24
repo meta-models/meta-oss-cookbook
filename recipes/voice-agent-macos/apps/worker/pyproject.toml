@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "muse-glimmer-worker"
+version = "0.1.0"
+description = "Local-only LiveKit voice worker for Muse Glimmer"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE", "PROVENANCE.md"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "livekit-agents[openai,silero]>=1.6.9,<2",
+  "livekit-plugins-executorch==0.1.0",
+]
+
+[tool.uv.sources]
+livekit-plugins-executorch = { workspace = true }
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=0.25,<2",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+muse-glimmer-worker = "muse_glimmer_worker.agent:main"
+muse-glimmer-diagnostics = "muse_glimmer_worker.cli:main"
+
+[tool.hatch.build]
+include = [
+  "/LICENSE",
+  "/PROVENANCE.md",
+  "/README.md",
+  "/src",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/muse_glimmer_worker"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/LICENSE",
+  "/PROVENANCE.md",
+  "/README.md",
+  "/src",
+  "/tests",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

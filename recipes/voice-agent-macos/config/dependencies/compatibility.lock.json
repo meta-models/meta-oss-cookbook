@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "status": "validation-gated",
+  "platform": "macos-arm64",
+  "executorch": {
+    "repository": "https://github.com/pytorch/executorch.git",
+    "commit": "20ad5ee43ff53804030899d621590af3daadda53",
+    "required_capabilities": [
+      "parakeet_persistent_helper",
+      "muse_glimmer_dflash_mlx",
+      "supports_cancel",
+      "supertonic_server_jsonl"
+    ],
+    "gates": {
+      "supertonic_runtime": {
+        "status": "landed",
+        "pull_request": "https://github.com/pytorch/executorch/pull/22063",
+        "commit": "81969a92dd2e5515fa23ccdf9d87346cf3ba2ba2"
+      },
+      "supports_cancel": {
+        "status": "landed",
+        "pull_request": "https://github.com/pytorch/executorch/pull/22070",
+        "commit": "5bd86e50fcd986999e4c09b82de040a3ba224466"
+      },
+      "supertonic_server_jsonl": {
+        "status": "landed",
+        "pull_request": "https://github.com/pytorch/executorch/pull/22208",
+        "commit": "20ad5ee43ff53804030899d621590af3daadda53"
+      }
+    }
+  },
+  "livekit": {
+    "agents_requirement": ">=1.6.9,<2",
+    "server_requirement": ">=1.9,<2"
+  },
+  "ready_for_release": false,
+  "release_blocker": "Pass final clean-machine macOS arm64 end-to-end validation."
+}

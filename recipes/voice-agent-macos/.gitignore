@@ -1,0 +1,54 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.keys
+*.pem
+*.token
+
+# Managed local state
+.local/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# Node
+node_modules/
+*.tsbuildinfo
+coverage/
+
+# Native/model artifacts
+*.pte
+*.pt
+*.ptd
+*.onnx
+*.safetensors
+*.gguf
+*.bin
+*.dylib
+*.so
+*.a
+*.o
+*.wav
+*.pcm
+*.metallib
+
+# Runtime data
+*.log
+*.pid
+*.sock
+recordings/
+reports/
+museglimmer-reports/
+.DS_Store

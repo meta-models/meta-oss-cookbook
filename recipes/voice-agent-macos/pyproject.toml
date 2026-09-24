@@ -5,6 +5,7 @@ description = "Fully local Muse Glimmer voice agent for macOS Apple silicon"
 requires-python = ">=3.13,<3.14"
 license = "Apache-2.0"
 dependencies = [
+  "huggingface-hub>=1.1,<2",
   "torch==2.13.0",
   "transformers==5.0.0rc1",
 ]

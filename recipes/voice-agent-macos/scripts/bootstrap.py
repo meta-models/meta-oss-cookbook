@@ -74,10 +74,7 @@ def main() -> int:
     ensure_local_directories()
     compatibility = read_json(ROOT / "config/dependencies/compatibility.lock.json")
     toolchain = read_json(ROOT / "config/dependencies/toolchain.lock.json")
-    tools = {
-        name: _require_tool(name)
-        for name in ("git", "uv", "node", "npm", "cmake", "livekit-server")
-    }
+    tools = {name: _require_tool(name) for name in toolchain["tools"] if name != "python"}
     versions = {
         "python": sys.version.split()[0],
         **{name: _version([path, "--version"]) for name, path in tools.items()},

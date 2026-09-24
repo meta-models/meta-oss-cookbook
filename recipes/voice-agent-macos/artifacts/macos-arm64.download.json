@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "platform": "macos-arm64",
+  "runtime_bundle": {
+    "repository": "younghan-meta/Muse-Glimmer-Voice-Agent-ExecuTorch",
+    "revision": "15200ebe3c37aeb4a6aec43021ceb6025f41f6a6",
+    "filename": "runtime-macos-arm64-executorch-20ad5ee.tar.gz",
+    "size_bytes": 9004149,
+    "sha256": "3aa0fbb811b23bd97b85e55db4393397766d34f7e57e7442ec7be37c141bfff1",
+    "members": {
+      "parakeet_helper": "bin/parakeet_helper",
+      "muse_glimmer_worker": "bin/muse_glimmer_worker",
+      "supertonic_runner": "bin/supertonic_runner",
+      "mlx_metallib": "bin/mlx.metallib"
+    }
+  },
+  "files": [
+    {
+      "role": "parakeet_model",
+      "repository": "younghan-meta/Parakeet-TDT-ExecuTorch-MLX",
+      "revision": "b1d26047ee8eae69272a268d5eb85c8bf2de9957",
+      "filename": "model.pte"
+    },
+    {
+      "role": "parakeet_tokenizer",
+      "repository": "younghan-meta/Parakeet-TDT-ExecuTorch-MLX",
+      "revision": "b1d26047ee8eae69272a268d5eb85c8bf2de9957",
+      "filename": "tokenizer.model"
+    },
+    {
+      "role": "muse_glimmer_model",
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "muse-glimmer-k-quant-17G-128K-text-dflash-metal/muse-glimmer-k-quant-17G-128K-text-dflash-metal.pte"
+    },
+    {
+      "role": "muse_glimmer_tokenizer",
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "tokenizer.json"
+    },
+    {
+      "role": "muse_glimmer_tokenizer_config",
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "tokenizer_config.json"
+    },
+    {
+      "role": "muse_glimmer_chat_template",
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "chat_template.jinja"
+    },
+    {
+      "role": "supertonic_model",
+      "repository": "younghan-meta/Supertonic-ExecuTorch-MLX",
+      "revision": "fecf95fa31ab6b26262dae0414e657c8f6580427",
+      "filename": "model.pte"
+    },
+    {
+      "role": "supertonic_voice_style",
+      "repository": "Supertone/supertonic-3",
+      "revision": "3cadd1ee6394adea1bd021217a0e650ede09a323",
+      "filename": "voice_styles/F1.json"
+    }
+  ],
+  "trees": [
+    {
+      "role": "supertonic_assets",
+      "repository": "Supertone/supertonic-3",
+      "revision": "3cadd1ee6394adea1bd021217a0e650ede09a323",
+      "files": [
+        {"filename": "LICENSE", "path": "LICENSE"},
+        {"filename": "config.json", "path": "config.json"},
+        {"filename": "onnx/duration_predictor.onnx", "path": "onnx/duration_predictor.onnx"},
+        {"filename": "onnx/text_encoder.onnx", "path": "onnx/text_encoder.onnx"},
+        {"filename": "onnx/tts.json", "path": "onnx/tts.json"},
+        {"filename": "onnx/unicode_indexer.json", "path": "onnx/unicode_indexer.json"},
+        {"filename": "onnx/vector_estimator.onnx", "path": "onnx/vector_estimator.onnx"},
+        {"filename": "onnx/vocoder.onnx", "path": "onnx/vocoder.onnx"},
+        {"filename": "voice_styles/F1.json", "path": "voice_styles/F1.json"}
+      ]
+    }
+  ],
+  "license_files": [
+    {
+      "repository": "younghan-meta/Parakeet-TDT-ExecuTorch-MLX",
+      "revision": "b1d26047ee8eae69272a268d5eb85c8bf2de9957",
+      "filename": "LICENSE",
+      "destination": ".local/artifacts/LICENSES/PARAKEET-CC-BY-4.0.txt"
+    },
+    {
+      "repository": "younghan-meta/Parakeet-TDT-ExecuTorch-MLX",
+      "revision": "b1d26047ee8eae69272a268d5eb85c8bf2de9957",
+      "filename": "NOTICE.md",
+      "destination": ".local/artifacts/LICENSES/PARAKEET-NOTICE.md"
+    },
+    {
+      "repository": "younghan-meta/Supertonic-ExecuTorch-MLX",
+      "revision": "fecf95fa31ab6b26262dae0414e657c8f6580427",
+      "filename": "LICENSE",
+      "destination": ".local/artifacts/LICENSES/SUPERTONIC-OPEN-RAIL-M.txt"
+    },
+    {
+      "repository": "younghan-meta/Supertonic-ExecuTorch-MLX",
+      "revision": "fecf95fa31ab6b26262dae0414e657c8f6580427",
+      "filename": "NOTICE.md",
+      "destination": ".local/artifacts/LICENSES/SUPERTONIC-NOTICE.md"
+    },
+    {
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "LICENSE",
+      "destination": ".local/artifacts/LICENSES/MUSE-GLIMMER-APACHE-2.0.txt"
+    },
+    {
+      "repository": "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+      "revision": "fc6fa93cdefeddc93abd7abf883e99279af7ea51",
+      "filename": "USAGE_POLICY.md",
+      "destination": ".local/artifacts/LICENSES/MUSE-GLIMMER-USAGE-POLICY.md"
+    }
+  ]
+}

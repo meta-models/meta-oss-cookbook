@@ -3,10 +3,19 @@ PYTHON := .venv/bin/python
 BOOTSTRAP_PYTHON := uv run --no-project --python 3.13 python
 STACK := $(PYTHON) -m scripts.dev_stack
 
-.PHONY: bootstrap prepare-artifacts dev up down restart status logs check test e2e publication-check
+.PHONY: setup bootstrap fetch-artifacts prepare-artifacts dev up down restart status logs check test e2e publication-check
+
+setup:
+	@$(BOOTSTRAP_PYTHON) -m scripts.setup checkout
+	@$(BOOTSTRAP_PYTHON) -m scripts.bootstrap
+	@$(PYTHON) -m scripts.setup artifacts
+	@$(PYTHON) -m scripts.prepare_artifacts
 
 bootstrap:
 	@$(BOOTSTRAP_PYTHON) -m scripts.bootstrap
+
+fetch-artifacts:
+	@$(PYTHON) -m scripts.setup artifacts
 
 prepare-artifacts:
 	@$(PYTHON) -m scripts.prepare_artifacts

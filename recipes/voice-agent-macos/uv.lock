@@ -687,6 +687,7 @@ name = "muse-glimmer-voice-agent-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "huggingface-hub", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "torch", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "transformers", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
 ]
@@ -700,6 +701,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "huggingface-hub", specifier = ">=1.1,<2" },
     { name = "torch", specifier = "==2.13.0" },
     { name = "transformers", specifier = "==5.0.0rc1" },
 ]

@@ -25,23 +25,22 @@ No LiveKit Cloud account or cloud inference service is used.
 | Precision | K-quant-17G |
 | Model server | ExecuTorch on MLX/Metal |
 | Offline? | Yes. Parakeet ASR, Muse Glimmer, and Supertonic all run locally after artifact preparation. |
-| Requires | macOS on Apple silicon, Python 3.13, Node.js 22, Xcode/CMake, and LiveKit Server 1.x |
+| Requires | macOS 26 or later on Apple silicon, Python 3.13, Node.js 22, Git, uv, and LiveKit Server 1.x |
 
 ## Status
 
 The native compatibility pin is ExecuTorch
 `20ad5ee43ff53804030899d621590af3daadda53`, which contains the landed
 Supertonic runtime, bounded MuseGlimmer worker cancellation, and persistent
-Supertonic JSONL mode. Release readiness remains false until final artifact
-provenance and clean-machine macOS arm64 end-to-end validation are complete.
-See `docs/upstream-pins.md`.
+Supertonic JSONL mode. Release readiness remains false until clean-machine
+macOS arm64 end-to-end validation is complete. See `docs/upstream-pins.md`.
 
 ## Supported platform
 
-- macOS on Apple silicon
+- macOS 26 or later on Apple silicon
 - Python 3.13
 - Node.js 22
-- A compatible Xcode/CMake toolchain
+- Git and uv
 - LiveKit Server 1.x
 
 Other platforms are not part of the first milestone.
@@ -54,28 +53,19 @@ Run application commands from the recipe root:
 cd recipes/voice-agent-macos
 ```
 
-Review the independent model and runtime licenses before providing artifacts.
-Models and native binaries are stored only under ignored `.local/` paths. Source
-checks and package builds are available now:
+Review the independent model and runtime licenses, then install the pinned
+ExecuTorch checkout, native runtime, and model artifacts:
 
 ```bash
-make check
-make test
-```
-
-With a clean ExecuTorch checkout at the locked commit, run:
-
-```bash
-make bootstrap
-make prepare-artifacts
+make setup
 make dev
 ```
 
-`make bootstrap` validates the locked toolchain and installs source
-dependencies. `make prepare-artifacts` validates the single pinned ExecuTorch
-checkout and every model/native artifact, then writes an ignored compatibility
-receipt. It does not download, build, export, or repair missing artifacts.
-Neither operation runs during normal startup.
+The first setup downloads about 20.8 GB into ignored `.local/` paths. Downloads
+are pinned to immutable Hugging Face revisions and are checked against the
+recorded sizes and SHA-256 hashes. `make setup` also installs source
+dependencies, builds the web UI, and writes compatibility receipts. It does
+not compile the models or native runners.
 
 ## Daily development
 
@@ -120,7 +110,7 @@ See `docs/security-model.md` for the local-process trust model.
 |---|---|---|
 | `bootstrap receipt is stale` | Source or dependency inputs changed | Run `make bootstrap` again. |
 | A required port is already in use | Another local process owns a stack port | Stop that process or run `make down` for a managed stack. |
-| Artifact preparation fails | A native binary, model, tokenizer, or checksum does not match the lock | Compare `.local/artifacts/` with `artifacts/macos-arm64.lock.json`. |
+| Artifact preparation fails | A native binary, model, tokenizer, or checksum does not match the lock | Run `make fetch-artifacts`, then `make prepare-artifacts`. |
 | Conversation remains at `Joining` | LiveKit or the worker is unavailable | Run `make status`, then inspect `make logs`. |
 
 ## Development checks

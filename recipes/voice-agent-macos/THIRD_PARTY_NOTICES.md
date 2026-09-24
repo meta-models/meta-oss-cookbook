@@ -18,10 +18,12 @@ third-party packages.
   terms restrict LiveKit model use to the LiveKit Agents framework; see
   `LICENSES/LIVEKIT-MODEL-LICENSE.txt`. This repository does not redistribute
   those model assets.
-- **Supertonic**: consult the upstream source and model licenses before
-  downloading or exporting assets. Assets are never committed here.
-- **Muse Glimmer and Parakeet models**: use is governed by their respective
-  model licenses. Model weights and exported programs are never committed here.
+- **Supertonic**: the converted PTE and upstream assets remain governed by the
+  BigScience Open RAIL-M license, including its use-based restrictions.
+- **Muse Glimmer**: the PTE and tokenizer files are downloaded from the
+  Apache-2.0 `meta-models/Muse-Glimmer-30B-ExecuTorch-PTE` repository.
+- **Parakeet**: the converted PTE and tokenizer are downloaded from
+  `younghan-meta/Parakeet-TDT-ExecuTorch-MLX` under CC-BY-4.0.
 - **Inter**: Copyright 2016 The Inter Project Authors
   (https://github.com/rsms/inter), SIL Open Font License 1.1, consumed through
   `@fontsource/inter`.

@@ -4,7 +4,7 @@ import json
 import os
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 try:
     import jsonschema
@@ -14,6 +14,7 @@ except ModuleNotFoundError:  # Core validation must also work before bootstrap.
 from scripts.repository import (
     ARTIFACT_LOCK,
     COMPATIBILITY_LOCK,
+    DOWNLOAD_LOCK,
     ROOT,
     TOOLCHAIN_LOCK,
     landed_gate_commits,
@@ -33,6 +34,13 @@ _EXECUTORCH_ARTIFACT_ROLES = {
 }
 _MLX_REPOSITORY = "https://github.com/ml-explore/mlx.git"
 _MLX_COMMIT = "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247"
+_ALLOWED_HUGGING_FACE_REPOSITORIES = {
+    "Supertone/supertonic-3",
+    "meta-models/Muse-Glimmer-30B-ExecuTorch-PTE",
+    "younghan-meta/Muse-Glimmer-Voice-Agent-ExecuTorch",
+    "younghan-meta/Parakeet-TDT-ExecuTorch-MLX",
+    "younghan-meta/Supertonic-ExecuTorch-MLX",
+}
 
 
 def _load(path: Path) -> dict[str, object]:
@@ -99,6 +107,98 @@ def _validate_artifacts() -> None:
     }
     if roles != required_roles:
         raise RuntimeError(f"artifact roles differ from the runtime contract: {sorted(roles)}")
+
+
+def _validate_hugging_face_source(item: object) -> None:
+    if not isinstance(item, dict):
+        raise RuntimeError("download entries must be objects")
+    if item.get("repository") not in _ALLOWED_HUGGING_FACE_REPOSITORIES:
+        raise RuntimeError(f"unapproved artifact repository: {item.get('repository')}")
+    revision = item.get("revision")
+    if not isinstance(revision, str) or not _GIT_COMMIT.fullmatch(revision):
+        raise RuntimeError("artifact downloads require an immutable repository revision")
+    filename = item.get("filename")
+    if not isinstance(filename, str) or not filename:
+        raise RuntimeError("artifact downloads require a filename")
+    path = PurePosixPath(filename)
+    if path.is_absolute() or ".." in path.parts:
+        raise RuntimeError(f"artifact filename escapes its repository: {filename}")
+
+
+def _validate_downloads() -> None:
+    specification = _load(DOWNLOAD_LOCK)
+    if specification.get("schema_version") != 1 or specification.get("platform") != "macos-arm64":
+        raise RuntimeError("download manifest has an unsupported schema or platform")
+    artifact_roles = {item["role"] for item in _load(ARTIFACT_LOCK)["artifacts"]}
+    handled: set[str] = set()
+
+    runtime = specification.get("runtime_bundle")
+    if not isinstance(runtime, dict):
+        raise RuntimeError("download manifest has no runtime bundle")
+    _validate_hugging_face_source(runtime)
+    if not isinstance(runtime.get("size_bytes"), int) or not isinstance(runtime.get("sha256"), str):
+        raise RuntimeError("runtime bundle requires size and checksum metadata")
+    if not _SHA256.fullmatch(runtime["sha256"]):
+        raise RuntimeError("runtime bundle has an invalid checksum")
+    members = runtime.get("members")
+    if not isinstance(members, dict) or not members:
+        raise RuntimeError("runtime bundle must map artifact roles to archive members")
+    for role, member in members.items():
+        if role in handled or role not in artifact_roles:
+            raise RuntimeError(f"invalid or duplicated download role: {role}")
+        if (
+            not isinstance(member, str)
+            or PurePosixPath(member).is_absolute()
+            or ".." in PurePosixPath(member).parts
+        ):
+            raise RuntimeError(f"invalid runtime bundle member: {member}")
+        handled.add(role)
+
+    for item in specification.get("files", []):
+        _validate_hugging_face_source(item)
+        role = item.get("role")
+        if role in handled or role not in artifact_roles:
+            raise RuntimeError(f"invalid or duplicated download role: {role}")
+        handled.add(role)
+
+    for item in specification.get("trees", []):
+        if not isinstance(item, dict):
+            raise RuntimeError("artifact tree entries must be objects")
+        role = item.get("role")
+        if role in handled or role not in artifact_roles:
+            raise RuntimeError(f"invalid or duplicated download role: {role}")
+        repository = item.get("repository")
+        revision = item.get("revision")
+        files = item.get("files")
+        if not isinstance(files, list) or not files:
+            raise RuntimeError(f"artifact tree has no files: {role}")
+        for file in files:
+            if not isinstance(file, dict):
+                raise RuntimeError(f"artifact tree file must be an object: {role}")
+            _validate_hugging_face_source(
+                {"repository": repository, "revision": revision, "filename": file.get("filename")}
+            )
+            relative = file.get("path")
+            if (
+                not isinstance(relative, str)
+                or PurePosixPath(relative).is_absolute()
+                or ".." in PurePosixPath(relative).parts
+            ):
+                raise RuntimeError(f"artifact tree path escapes its root: {relative}")
+        handled.add(role)
+
+    if handled != artifact_roles:
+        raise RuntimeError("download roles differ from the runtime artifact contract")
+
+    for item in specification.get("license_files", []):
+        _validate_hugging_face_source(item)
+        destination = item.get("destination")
+        if not isinstance(destination, str) or not destination.startswith(
+            ".local/artifacts/LICENSES/"
+        ):
+            raise RuntimeError(
+                f"license destination escapes the local license directory: {destination}"
+            )
 
 
 def _validate_compatibility(
@@ -189,6 +289,7 @@ def _validate_release_artifacts(artifacts: object, final_executorch_commit: obje
 
 def main() -> int:
     _validate_artifacts()
+    _validate_downloads()
     schema = _load(ROOT / "artifacts/manifest.schema.json")
     if schema.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         raise RuntimeError("artifact schema must use JSON Schema 2020-12")

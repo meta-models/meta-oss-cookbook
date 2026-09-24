@@ -6,7 +6,7 @@
       "role": "parakeet_helper",
       "kind": "file",
       "executable": true,
-      "distribution": "build",
+      "distribution": "download",
       "source": "executorch",
       "revision": "20ad5ee43ff53804030899d621590af3daadda53",
       "license": "BSD-3-Clause",
@@ -14,13 +14,13 @@
       "sensitive": true,
       "sha256": "53a45df84fee869762449602767b9430caa409efb06a6661e621adb56c9f0b20",
       "size_bytes": 13510864,
-      "prepare": "Build from the single pinned ExecuTorch checkout."
+      "prepare": "Download the pinned macOS runtime bundle."
     },
     {
       "role": "parakeet_model",
       "kind": "file",
       "executable": false,
-      "distribution": "build",
+      "distribution": "download",
       "source": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
       "revision": "541d1f99c6b0c3cd0b11a95167540bb8edefd82b",
       "license": "CC-BY-4.0",
@@ -28,13 +28,13 @@
       "sensitive": true,
       "sha256": "4690cfb245e3511f2822d5e716974ca7343c58c7e76ad95e81e79bcf19dcf4ae",
       "size_bytes": 484430860,
-      "prepare": "Place a licensed compatible artifact and record its checksum locally."
+      "prepare": "Download the pinned Parakeet ExecuTorch MLX export."
     },
     {
       "role": "parakeet_tokenizer",
       "kind": "file",
       "executable": false,
-      "distribution": "build",
+      "distribution": "download",
       "source": "https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3",
       "revision": "541d1f99c6b0c3cd0b11a95167540bb8edefd82b",
       "license": "CC-BY-4.0",
@@ -56,7 +56,7 @@
       "sensitive": true,
       "sha256": "d6f7e97531835823912a5269bdee1eeebc2aa81eb940f6c2ea4eadd3b33a1b43",
       "size_bytes": 12726128,
-      "prepare": "Build from the single pinned ExecuTorch checkout."
+      "prepare": "Download the pinned macOS runtime bundle."
     },
     {
       "role": "muse_glimmer_model",
@@ -118,7 +118,7 @@
       "role": "supertonic_runner",
       "kind": "file",
       "executable": true,
-      "distribution": "build",
+      "distribution": "download",
       "source": "executorch",
       "revision": "20ad5ee43ff53804030899d621590af3daadda53",
       "license": "BSD-3-Clause",
@@ -126,13 +126,13 @@
       "sensitive": true,
       "sha256": "d3629e6337103e4ffa6ce930e7fa58ede810f44648b19a253a249d38a0813adf",
       "size_bytes": 5942144,
-      "prepare": "Build from the single pinned ExecuTorch checkout."
+      "prepare": "Download the pinned macOS runtime bundle."
     },
     {
       "role": "mlx_metallib",
       "kind": "file",
       "executable": false,
-      "distribution": "build",
+      "distribution": "download",
       "source": "https://github.com/ml-explore/mlx.git",
       "revision": "7a1d4f5c12ac82f4b4d0a6e71538d89ca0605247",
       "license": "MIT",
@@ -140,13 +140,13 @@
       "sensitive": true,
       "sha256": "713ddc7352f74d1bf4c50ea19fc65ea6f253d5779ed46b3108eac8a1c26d83ec",
       "size_bytes": 1268028,
-      "prepare": "Copy the MLX metallib built beside the final-pinned native executables."
+      "prepare": "Download the MLX metallib from the pinned macOS runtime bundle."
     },
     {
       "role": "supertonic_model",
       "kind": "file",
       "executable": false,
-      "distribution": "build",
+      "distribution": "download",
       "source": "https://huggingface.co/Supertone/supertonic-3",
       "revision": "3cadd1ee6394adea1bd021217a0e650ede09a323",
       "license": "BigScience Open RAIL-M",
@@ -154,7 +154,7 @@
       "sensitive": true,
       "sha256": "8aa17b185db9c4b18c8bebd49414337342a0499985e8218d6c30f618c8227432",
       "size_bytes": 198747136,
-      "prepare": "Export from approved Supertonic assets during artifact preparation."
+      "prepare": "Download the pinned Supertonic ExecuTorch MLX export."
     },
     {
       "role": "supertonic_assets",

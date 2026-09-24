@@ -23,6 +23,7 @@ BOOTSTRAP_RECEIPT = STATE_DIR / "bootstrap.json"
 CREDENTIAL_FILE = RUN_DIR / "livekit.keys"
 COMPATIBILITY_LOCK = ROOT / "config" / "dependencies" / "compatibility.lock.json"
 ARTIFACT_LOCK = ROOT / "artifacts" / "macos-arm64.lock.json"
+DOWNLOAD_LOCK = ROOT / "artifacts" / "macos-arm64.download.json"
 TOOLCHAIN_LOCK = ROOT / "config" / "dependencies" / "toolchain.lock.json"
 BOOTSTRAP_INPUTS = (
     ROOT / "pyproject.toml",

@@ -63,6 +63,10 @@ def test_accepts_artifact_gated_capabilities(compatibility: dict[str, object]) -
     )
 
 
+def test_download_manifest_covers_every_runtime_artifact() -> None:
+    validate_manifests._validate_downloads()
+
+
 def test_landed_gate_requires_commit(compatibility: dict[str, object]) -> None:
     value = deepcopy(compatibility)
     _gates(value)["supertonic_runtime"]["commit"] = None

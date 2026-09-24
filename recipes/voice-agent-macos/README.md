@@ -5,6 +5,8 @@ microphone, loopback-only LiveKit carries audio, and local ExecuTorch runtimes
 perform Parakeet speech recognition, Muse Glimmer generation, and Supertonic
 speech synthesis.
 
+https://github.com/user-attachments/assets/c09cdc7d-91aa-453b-8663-4407d83adcf5
+
 ```text
 browser microphone
   -> 127.0.0.1 LiveKit

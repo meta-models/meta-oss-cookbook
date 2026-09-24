@@ -1,0 +1,48 @@
+[project]
+name = "muse-glimmer-voice-agent-workspace"
+version = "0.1.0"
+description = "Fully local Muse Glimmer voice agent for macOS Apple silicon"
+requires-python = ">=3.13,<3.14"
+license = "Apache-2.0"
+dependencies = [
+  "torch==2.13.0",
+  "transformers==5.0.0rc1",
+]
+
+[tool.uv.workspace]
+members = [
+  "apps/token-service",
+  "apps/worker",
+  "packages/livekit-plugins-executorch",
+]
+
+[tool.uv]
+package = false
+environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
+
+[dependency-groups]
+dev = [
+  "jsonschema>=4.25,<5",
+  "pytest>=8.4,<9",
+  "ruff>=0.12,<1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "apps", "packages"]
+addopts = "--strict-markers --import-mode=importlib"
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+  "unit: hermetic unit test",
+  "e2e: model-heavy macOS integration test",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+exclude = [".local"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

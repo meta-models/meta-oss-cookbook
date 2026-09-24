@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "livekit-plugins-executorch"
+dynamic = ["version"]
+description = "Local ExecuTorch Parakeet and Supertonic adapters for LiveKit Agents"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE", "PROVENANCE.md"]
+keywords = ["voice", "livekit", "executorch", "parakeet", "supertonic"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Sound/Audio",
+]
+dependencies = ["livekit-agents>=1.6.9,<2"]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.4,<9",
+  "pytest-asyncio>=0.25,<2",
+  "ruff>=0.12,<1",
+]
+
+[tool.hatch.version]
+path = "livekit/plugins/executorch/version.py"
+
+[tool.hatch.build]
+include = [
+  "/LICENSE",
+  "/PROVENANCE.md",
+  "/README.md",
+  "/livekit",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["livekit"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/LICENSE",
+  "/PROVENANCE.md",
+  "/README.md",
+  "/livekit",
+  "/tests",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["unit: hermetic unit tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]

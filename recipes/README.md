@@ -10,3 +10,4 @@ Example agents that show what Muse Glimmer does best: plan, call tools, execute,
 | [alert-triage-copilot/](alert-triage-copilot/) | A three-stage strict-JSON pipeline that grades its own output |
 | [computer-use-web/](computer-use-web/) | Muse Glimmer drives a real Mac to shop on a website — screenshots and mouse coordinates, no accessibility tree |
 | [sandboxed-agent/](sandboxed-agent/) | An agent is told to exfiltrate a credential; the sandbox blocks it twice, and the model never gets the chance to refuse |
+| [voice-agent-macos/](voice-agent-macos/) | A complete local voice conversation stack using ExecuTorch for speech recognition, Muse Glimmer generation, and speech synthesis on Apple silicon |

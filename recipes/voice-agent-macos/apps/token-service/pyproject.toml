@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "muse-glimmer-token-service"
+version = "0.1.0"
+description = "Local-only LiveKit token issuer for the Muse Glimmer voice UI"
+requires-python = ">=3.13,<3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = [
+  "fastapi>=0.116,<1",
+  "livekit-api>=1.2,<2",
+  "pydantic-settings>=2.10,<3",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[dependency-groups]
+dev = [
+  "httpx>=0.28,<1",
+  "PyJWT>=2.10,<3",
+  "pytest>=8.4,<9",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+muse-glimmer-token-service = "muse_glimmer_token_service.__main__:main"
+
+[tool.hatch.build]
+include = [
+  "/LICENSE",
+  "/src",
+  "/tests",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/muse_glimmer_token_service"]

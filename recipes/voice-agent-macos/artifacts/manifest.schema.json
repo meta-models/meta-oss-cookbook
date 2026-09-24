@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/muse-glimmer-voice-agent/artifact-manifest.schema.json",
+  "title": "Muse Glimmer voice agent artifact manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "platform", "artifacts"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "platform": {"const": "macos-arm64"},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "kind", "executable", "distribution", "license", "destination", "sensitive", "sha256"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["file", "directory"]},
+          "executable": {"type": "boolean"},
+          "distribution": {"enum": ["build", "download", "user-provided"]},
+          "source": {"type": ["string", "null"]},
+          "revision": {"type": ["string", "null"]},
+          "license": {"type": "string", "minLength": 1},
+          "destination": {"type": "string", "pattern": "^\\.local/artifacts/"},
+          "sensitive": {"type": "boolean"},
+          "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+          "size_bytes": {"type": ["integer", "null"], "minimum": 1},
+          "prepare": {"type": ["string", "null"]}
+        }
+      }
+    }
+  }
+}

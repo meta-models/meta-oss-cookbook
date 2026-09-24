@@ -1,0 +1,22 @@
+port: 7880
+bind_addresses:
+  - 127.0.0.1
+
+rtc:
+  node_ip: 127.0.0.1
+  tcp_port: 0
+  udp_port: 7882
+  use_external_ip: false
+  enable_loopback_candidate: true
+  interfaces:
+    includes:
+      - lo0
+  ips:
+    includes:
+      - 127.0.0.0/8
+
+logging:
+  level: info
+
+room:
+  auto_create: true

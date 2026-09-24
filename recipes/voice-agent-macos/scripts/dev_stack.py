@@ -218,7 +218,7 @@ def _services(receipt: dict[str, object], api_key: str, api_secret: str) -> list
         "MUSE_GLIMMER_BASE_URL": "http://127.0.0.1:8000/v1",
         "MUSE_GLIMMER_API_KEY": "local",
         "MUSE_GLIMMER_REASONING_STRENGTH": "low",
-        "MUSE_GLIMMER_MAX_TOKENS": "256",
+        "MUSE_GLIMMER_MAX_TOKENS": "512",
         "ORT_DISABLE_TELEMETRY": "1",
         "PARAKEET_HELPER_PATH": _artifact(receipt, "parakeet_helper"),
         "PARAKEET_MODEL_PATH": _artifact(receipt, "parakeet_model"),

@@ -148,7 +148,7 @@ def test_service_order_and_local_environment(
     assert worker.environment["LIVEKIT_URL"] == "ws://127.0.0.1:7880"
     assert worker.environment["MUSE_GLIMMER_BASE_URL"] == "http://127.0.0.1:8000/v1"
     assert worker.environment["MUSE_GLIMMER_REASONING_STRENGTH"] == "low"
-    assert worker.environment["MUSE_GLIMMER_MAX_TOKENS"] == "256"
+    assert worker.environment["MUSE_GLIMMER_MAX_TOKENS"] == "512"
     assert worker.environment["ORT_DISABLE_TELEMETRY"] == "1"
     assert "OPENAI_API_KEY" not in worker.environment
 

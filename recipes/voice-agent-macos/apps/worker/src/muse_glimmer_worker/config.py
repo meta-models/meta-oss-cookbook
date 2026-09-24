@@ -61,7 +61,7 @@ class GlimmerConfig:
             ),
             muse_glimmer_api_key=_env("MUSE_GLIMMER_API_KEY", "local"),
             muse_glimmer_temperature=_finite_float("MUSE_GLIMMER_TEMPERATURE", 0.0),
-            muse_glimmer_max_tokens=_positive_int("MUSE_GLIMMER_MAX_TOKENS", 256),
+            muse_glimmer_max_tokens=_positive_int("MUSE_GLIMMER_MAX_TOKENS", 512),
             supertonic_runner_path=_required_file("SUPERTONIC_RUNNER_PATH", executable=True),
             supertonic_pte_path=_required_file("SUPERTONIC_PTE_PATH"),
             supertonic_asset_dir=_required_directory("SUPERTONIC_ASSET_DIR"),

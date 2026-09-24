@@ -26,6 +26,7 @@ from .lifecycle import ProviderCleanup
 
 logger = logging.getLogger("muse-glimmer-worker")
 _VAD_KEY = "glimmer_vad"
+_INTERRUPTIONS_ENABLED = False
 
 
 class GlimmerAgent(Agent):
@@ -35,7 +36,7 @@ class GlimmerAgent(Agent):
     async def on_enter(self) -> None:
         self.session.generate_reply(
             instructions="Greet the user briefly and ask how you can help.",
-            allow_interruptions=True,
+            allow_interruptions=_INTERRUPTIONS_ENABLED,
         )
 
 
@@ -70,9 +71,7 @@ async def entrypoint(ctx: JobContext) -> None:
             tts=providers.session_tts,
             turn_handling=TurnHandlingOptions(
                 interruption={
-                    "enabled": True,
-                    "resume_false_interruption": True,
-                    "false_interruption_timeout": 1.0,
+                    "enabled": _INTERRUPTIONS_ENABLED,
                 },
                 preemptive_generation={"enabled": False},
             ),

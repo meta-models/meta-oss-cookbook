@@ -106,5 +106,9 @@ def test_worker_is_loopback_only_with_neutral_agent_name() -> None:
     assert agent.server._agent_name == "assistant"
 
 
+def test_interruptions_are_disabled_until_native_cancellation_recovers() -> None:
+    assert agent._INTERRUPTIONS_ENABLED is False
+
+
 def test_onnx_runtime_telemetry_is_disabled_before_agent_import() -> None:
     assert os.environ["ORT_DISABLE_TELEMETRY"] == "1"

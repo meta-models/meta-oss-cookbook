@@ -37,7 +37,7 @@ def test_config_accepts_only_fixed_local_endpoints(
     config = config_module.GlimmerConfig.from_env()
     assert config.livekit_url == "ws://127.0.0.1:7880"
     assert config.muse_glimmer_base_url == "http://127.0.0.1:8000/v1"
-    assert config.muse_glimmer_max_tokens == 256
+    assert config.muse_glimmer_max_tokens == 512
 
     monkeypatch.setenv("LIVEKIT_URL", "ws://localhost:7880")
     with pytest.raises(ValueError, match="must be exactly"):

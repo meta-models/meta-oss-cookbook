@@ -15,8 +15,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from torchtitan.experiments.rl.rollout.types import Rollout
-from torchtitan.experiments.rl.rubrics import RewardFn
+from torchtitan.rl.rollout import Rollout
+from torchtitan.rl.rubric import RewardFn
 
 
 def _last_graded_env_rewards(rollout: Rollout) -> dict[str, float]:

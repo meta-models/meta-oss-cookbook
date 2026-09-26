@@ -28,12 +28,12 @@ from pathlib import Path
 from renderers import Message, ToolSpec
 from renderers.base import ParsedToolCall
 
-from torchtitan.experiments.rl.environment import (
+from torchtitan.rl.rollout.environment import (
     MessageEnv,
     MessageEnvInitOutput,
     MessageEnvStepOutput,
 )
-from torchtitan.experiments.rl.examples.glimmer_data_analyst.data import (
+from torchtitan.rl.examples.glimmer_data_analyst.data import (
     OUTPUT_FILENAME,
     GlimmerDataAnalystSample,
 )
@@ -44,7 +44,7 @@ MAX_OUTPUT_CHARS = 800
 """Cap on stdout/stderr fed back to the model (~200 tokens). Deliberately tight:
 every tool reply is re-sent as part of the prompt on every subsequent turn, so a
 verbose reply is paid for again each turn. Sized together with the rollout token
-budget in ``rollouter.py`` so a full-length rollout cannot outgrow it."""
+budget in ``config_registry.py`` so a full-length rollout cannot outgrow it."""
 
 # Minimal env for the sandboxed subprocess: a bare PATH and a HOME/TMPDIR pointed at
 # the task workspace, not the real user's, so `~`-relative paths and stray `.cache`

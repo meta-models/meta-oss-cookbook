@@ -20,7 +20,7 @@ dependencies = [
 dev = [
   "httpx>=0.28,<1",
   "PyJWT>=2.10,<3",
-  "pytest>=8.4,<9",
+  "pytest>=8.4,<10",
   "ruff>=0.12,<1",
 ]
 

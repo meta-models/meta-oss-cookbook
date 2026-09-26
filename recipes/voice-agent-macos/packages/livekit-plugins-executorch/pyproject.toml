@@ -21,7 +21,7 @@ dependencies = ["livekit-agents>=1.6.9,<2"]
 
 [dependency-groups]
 dev = [
-  "pytest>=8.4,<9",
+  "pytest>=8.4,<10",
   "pytest-asyncio>=0.25,<2",
   "ruff>=0.12,<1",
 ]

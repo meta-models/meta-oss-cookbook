@@ -101,11 +101,7 @@ see at startup.
 Those figures exclude activations, temporary buffers, and the generator used by
 RL.
 
-Each recipe's banner states only hardware it was actually verified on. RL
-support in TorchTitan moves fast: a change that landed on 2026-09-13
-([#4535](https://github.com/pytorch/torchtitan/pull/4535)) made 30B Muse Glimmer
-RL stop fitting on a single 8x95 GB node, including upstream's own reference
-config. The RL recipe pins a known-good commit and explains why.
+Each recipe's banner states only hardware it was actually verified on.
 
 ## Next steps
 

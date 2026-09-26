@@ -13,120 +13,97 @@ external services.
 | Model server | vLLM (TitanRL's in-process generator) |
 | Offline? | Yes, after the one-time checkpoint download |
 | Hardware verified on | 8x H100 95GB (single node) |
-| Max VRAM observed | ~88 GB/GPU on the training GPUs (peak, post-optimizer-allocation) |
-| Requires | [TorchTitan](https://github.com/pytorch/torchtitan) **pinned at `8108e201a`** + TitanRL deps (Monarch, TorchStore, vLLM, FlashAttention-3) |
-
-> **You must pin TorchTitan to `8108e201a`.** On current `main` this recipe --
-> and upstream's own `rl_grpo_muse_glimmer_30b_search_r1` -- runs out of memory
-> during weight sync. See [Pinning TorchTitan](#pinning-torchtitan).
+| Max VRAM observed | ~93 GiB of 95 GiB on the busiest trainer GPU; ~88-90 GiB on the others |
+| Requires | [TorchTitan](https://github.com/pytorch/torchtitan) `main` with [TitanRL](https://github.com/pytorch/torchtitan/tree/main/torchtitan/rl) (Monarch, TorchStore, vLLM, FlashAttention-3) |
 
 ## Does it work?
 
-Mean rollout reward over a run on the public 30B checkpoint, 8 prompts x 8
+Mean rollout reward per training step on the public 30B checkpoint, 8 prompts x 8
 samples per step:
 
-![Mean rollout reward per GRPO step, rising from 0.31 at step 1 to 0.99 at step 16](../../../../assets/glimmer-data-analyst-reward.png)
+![Mean rollout reward per GRPO step, rising from 0.21 at step 1 to 0.98 at step 15](../../../../assets/glimmer-data-analyst-reward.png)
 
 More useful than the reward line is *why* it rises. Grouping every rollout by
 how it ended, across the run:
 
-![Stacked area chart of rollout outcomes over training: completed rises from 26% to 84% while rollouts that ran out of tokens mid-answer fall from 38% to zero](../../../../assets/glimmer-data-analyst-outcomes.png)
+![Stacked area chart of rollout outcomes over training: completed goes from 20% to 70% while rollouts that ran out of tokens mid-answer go from 48% to 0%](../../../../assets/glimmer-data-analyst-outcomes.png)
 
-Rollouts that **ran out of tokens mid-answer go from 38% to 0%**, and completions
-go from 26% to 84%. That is the PinchBench failure mode being trained away: the
-model stops rambling through a long recovery and starts computing the number and
-writing it in the same command.
+Rollouts that **ran out of tokens mid-answer go from 48% to 0%**, and completed
+rollouts from 20% to 70%. That is the PinchBench failure mode being trained away:
+the model stops deliberating and starts computing the number and writing it.
+The ~30% that still run out of turns at the end are not failures: every one of
+them had already written the correct answer (most with their second command)
+and kept re-checking it until the turn limit.
 
-### Read this part before you trust the curve
+**The run stops at step 15 because the task saturates, not because
+anything crashed.** By then every rollout in a group scores 1.0, so GRPO has no
+reward variance left, and TitanRL stops with `10 consecutive untrainable batches`.
+The four synthetic task templates are learnable that quickly; see
+[Make it yours](#make-it-yours) for making them harder.
 
-**The run stops at step 16, and that is the task saturating, not a crash.** By
-the end every rollout in a group scores 1.0, so GRPO has no reward variance left,
-and TitanRL's batcher correctly aborts with `10 consecutive untrainable batches`.
-
-That is a genuine limitation of the **task**, not the machinery: these four
-synthetic templates are learnable in ~16 steps and then stop teaching anything.
-It makes a fast, legible demo -- you see the whole learning curve in under an
-hour -- but it is not a convergence study, and the final policy has not been
-stressed. If you want a long run, make the tasks harder first (see
-[Make it yours](#make-it-yours)).
-
-No before/after benchmark comparison is published here, because we have not run
-one. ([W&B](https://wandb.ai/a-shamsoshoara-m/titan_rl).)
+RL sampling is random, so your run will differ in detail; the shape of the curve
+is what to compare. ([W&B run](https://wandb.ai/a-shamsoshoara-m/titan_rl/runs/b3t3h4oz))
 
 ## What the model actually does, before and after
 
-Both transcripts below are real rollouts from the run above, on the same task
-family (count log lines at a given level). "Before" is from the first training
-groups, so the policy has had no gradient update yet.
+Both transcripts are real rollouts from the run above. "Before" is from the first
+training groups, before any gradient update.
 
 ### Before: deliberates, never acts
-
-````text
-PROMPT
-  The file `access.log` ... Count how many lines have level `WARN`.
-  Write the count to `answer.json` as JSON: {"answer": <number>}.
-
-ASSISTANT  (reasoning: 1674 chars, content: empty, tool calls: NONE)
-  "We need to count lines with level WARN. Probably format: timestamp level ...
-   Could be like "2023-... WARN ..." Or start with timestamp and a level.
-   Let's inspect file first? Might need to know exact pattern. Could just grep
-   for ' WARN ' or 'WARN' after timestamp. Safer to view first few lines.
-   Might need one tool call to count and write file in same command..."
-
-  -> truncated_length (hit the token cap mid-thought)
-  -> reward 0.0
-````
-
-It reasons itself in circles about which approach to take and never emits a
-single tool call. No command runs, no file is written.
-
-### After: inspects, computes and writes in one command, verifies, stops
 
 ````text
 PROMPT
   The file `access.log` ... Count how many lines have level `DEBUG`.
   Write the count to `answer.json` as JSON: {"answer": <number>}.
 
-TURN 0  (reasoning: 518 chars)
-  bash: head -n 5 access.log && wc -l access.log
-  -> 2026-08-01T00:00:00Z INFO 10.0.4.3 request handled ...
+ASSISTANT  (reasoning: 1690 chars, tool calls: none)
+  "... Let's inspect file? Could just run grep -c DEBUG. But need to ensure
+   line starts with timestamp and level. ...
+   Better to first examine first few lines to know format. That would be a
+   tool call. Then count and write. That's two calls. Could we do in one
+   command? ... Might be okay to just grep for ' DEBUG ' or line contains
+   'DEBUG' after timestamp? ..."
 
-TURN 1  (reasoning: 489 chars)
-  bash: count=$(grep -c ' DEBUG ' access.log); echo "{\"answer\": $count}" > answer.json; cat answer.json
-  -> {"answer": 12}
-  -> file_exists 1.0, file_parses 1.0, correct 1.0
+  -> ran out of tokens mid-thought; no command ever ran
+  -> reward 0.0
+````
 
-TURN 2  (reasoning: 187 chars)
-  bash: awk '$2=="DEBUG"{c++} END{print c}' access.log
+### After: inspects, writes the answer in one command, checks it, stops
+
+````text
+PROMPT
+  (same task: count the lines with level `DEBUG`)
+
+TURN 0
+  bash: wc -l access.log && head -n 5 access.log
+  -> 55 access.log
+     <timestamp> ERROR 10.0.4.2 request handled ...
+
+TURN 1
+  bash: count=$(grep -c '[[:space:]]DEBUG[[:space:]]' access.log || true); echo "{\"answer\": $count}" > answer.json && cat answer.json
+  -> {"answer": 12}                        # graded correct here
+
+TURN 2
+  bash: grep ' DEBUG ' access.log | wc -l
   -> 12                                    # cross-checks with a second method
 
-TURN 3  (reasoning: 78 chars)
-  (no tool call -- done)
+TURN 3
+  (no tool call) "The count has been written to `answer.json` ...
+  Verified with `grep ' DEBUG ' access.log | wc -l` -> 12."
   -> completed, reward 1.0
 ````
 
-Three behaviors were learned here, and all three are the PinchBench failure modes
-inverted: it **checks the format first** instead of guessing, it **computes and
-persists in the same command** rather than computing and forgetting to write, and
-it **stops** once verified rather than burning the remaining turns. The
-self-check in turn 2 (`awk` confirming the `grep -c` result) was not asked for.
+The trained model checks the format instead of guessing, computes the number and
+writes the file in the same command, and stops once it has verified the result.
+Nobody asked for the second check in turn 2.
 
-Reasoning also shortens as the rollout proceeds -- 518 -> 489 -> 187 -> 78 chars
--- rather than expanding, which is the thrash pattern the anti-repeat penalty
-targets.
-
-### This is not cherry-picked
-
-Across the first 122 and last 120 training rollouts:
+Across the first and last 128 training rollouts of the run:
 
 | | before | after |
 |---|---|---|
-| rollouts making **zero tool calls** (deliberate, never act) | **32%** | **0%** |
-| median first-turn reasoning | 684 chars | 522 chars |
-| median tool calls per rollout | 4 | 4 |
-
-The tool-call count is unchanged -- the model was never lazy, it was stuck. What
-changed is that it now reliably *starts*, and finishes.
+| rollouts with the correct answer in `answer.json` | 52% | 100% |
+| rollouts making **zero tool calls** (deliberate, never act) | 26% | 0% |
+| median tool calls per rollout | 5 | 4 |
 
 ## The problem this solves
 
@@ -150,76 +127,72 @@ microseconds with no judge.
 ## Quickstart
 
 ```bash
-# from a TorchTitan checkout with the TitanRL deps installed (see Setup below)
-python -m torchtitan.experiments.rl.train \
-  --module glimmer_data_analyst \
+# from a TorchTitan checkout set up as in Setup below
+python -m torchtitan.rl.train \
+  --module torchtitan.rl.examples.glimmer_data_analyst \
   --config rl_grpo_muse_glimmer_30b_data_analyst_smoke \
   --dump-folder outputs/rl/glimmer_data_analyst_smoke
 ```
 
+This is a 10-step smoke run with a small batch (about 30 minutes on 8x H100). The
+curve and transcripts above come from the full config (about 75 minutes):
+
+```bash
+python -m torchtitan.rl.train \
+  --module torchtitan.rl.examples.glimmer_data_analyst \
+  --config rl_grpo_muse_glimmer_30b_data_analyst \
+  --dump-folder outputs/rl/glimmer_data_analyst
+```
+
+To plot your own run and print the before/after numbers:
+
+```bash
+uv pip install matplotlib
+python "$COOKBOOK/post-training/rl/titanrl/data-analyst/scripts/plot_results.py" \
+  outputs/rl/glimmer_data_analyst
+```
+
 ## Setup
 
-**1. Get TorchTitan and the RL dependencies.**
+**1. Clone TorchTitan and create a venv.**
 
 ```bash
 COOKBOOK=/absolute/path/to/meta-oss-cookbook
 git clone https://github.com/pytorch/torchtitan.git
 cd torchtitan
-git checkout 8108e201a       # required -- see "Pinning TorchTitan" below
 pip install uv
 uv venv --python 3.12 glimmer-rl
 source glimmer-rl/bin/activate
-
-uv pip install -r torchtitan/experiments/rl/requirements.txt
-uv pip install --no-deps "git+https://github.com/meta-pytorch/torchstore.git@main"
-uv pip install flash-attn-3 --extra-index-url=https://download.pytorch.org/whl/test/cu130
 ```
 
-**2. Install torch, torchvision, vllm and torchcomms pinned to ONE nightly date.**
-This matters more than it looks -- see [Troubleshooting](#troubleshooting).
+**2. Install TorchTitan and TitanRL.** These are TitanRL's
+[Quick Start](https://github.com/pytorch/torchtitan/tree/main/torchtitan/rl#quick-start)
+steps for H100, with TorchTitan's own `requirements.txt` first:
 
 ```bash
-DATE=20260909   # pick a date where all four wheels exist for your platform
-uv pip install \
-  torch==2.15.0.dev${DATE}+cu130 \
-  torchvision==0.30.0.dev${DATE}+cu130 \
-  torchcomms==0.3.0.dev${DATE}+cu130 \
-  vllm==1.0.0.dev${DATE}+cu130 \
+uv pip install -r requirements.txt
+uv pip install -r torchtitan/rl/requirements.txt
+uv pip install --no-deps "git+https://github.com/meta-pytorch/torchstore.git@main"
+uv pip install flash-attn-3 --extra-index-url=https://download.pytorch.org/whl/test/cu130
+uv pip install torch torchvision vllm --pre \
   --extra-index-url https://download.pytorch.org/whl/nightly/cu130 \
   --index-strategy unsafe-best-match
 ```
 
-**3. Install and register this recipe's TitanRL module.**
+Keep this order: vLLM must be installed last. The last command leaves out
+`torchcomms`, which TitanRL's Quick Start also lists; it is not needed on a single
+node, and including it makes the install fail (see
+[Troubleshooting](#troubleshooting)).
 
-The commands below run from the TorchTitan checkout and use the `COOKBOOK`
-absolute path set in step 1. See [`titanrl_files/`](titanrl_files/) for the
-source layout.
+**3. Install this recipe** into the TorchTitan checkout:
 
 ```bash
-RECIPE="$COOKBOOK/post-training/rl/titanrl/data-analyst/titanrl_files"
-TARGET=torchtitan/experiments/rl/examples/glimmer_data_analyst
-if [[ -e "$TARGET" ]]; then
-  echo "refusing to replace existing $TARGET" >&2
-  exit 1
-fi
-cp -R "$RECIPE" "$TARGET"
-
-python - <<'PY'
-from pathlib import Path
-
-registry = Path("torchtitan/experiments/__init__.py")
-text = registry.read_text()
-marker = '        "search_r1",\n'
-entry = '        "glimmer_data_analyst",\n'
-if entry not in text:
-    if marker not in text:
-        raise SystemExit(f"registration marker not found in {registry}")
-    registry.write_text(text.replace(marker, marker + entry, 1))
-PY
+cp -R "$COOKBOOK/post-training/rl/titanrl/data-analyst/titanrl_files" \
+  torchtitan/rl/examples/glimmer_data_analyst
 
 export PYTHONPATH="$PWD:${PYTHONPATH:-}"
-pytest \
-  torchtitan/experiments/rl/examples/glimmer_data_analyst/tests/ -v
+uv pip install pytest
+pytest torchtitan/rl/examples/glimmer_data_analyst/tests/ -v
 # -> 17 passed, no GPU required
 ```
 
@@ -228,25 +201,17 @@ pytest \
 ```bash
 python scripts/download_hf_assets.py \
   --repo_id meta-models/Muse-Glimmer-30B \
-  --local_dir torchtitan/experiments/rl/example_checkpoint \
+  --local_dir torchtitan/rl/example_checkpoint \
   --all
 ```
 
-**5. Point `PYTHONPATH` at the checkout** (Monarch-spawned workers import from it):
+**5. Before each run**, from the TorchTitan checkout:
 
 ```bash
-export PYTHONPATH="$PWD:${PYTHONPATH:-}"
-wandb login          # metrics are on by default; --metrics.no-enable-wandb to skip
+source glimmer-rl/bin/activate
+export PYTHONPATH="$PWD:${PYTHONPATH:-}"   # Monarch-spawned workers import from it
+wandb login                                # or add --metrics.no-enable-wandb
 ```
-
-**If your machine has no InfiniBand**, also:
-
-```bash
-export USE_TORCHCOMMS_RDMA=0
-```
-
-TorchStore moves trainer->generator weights over RDMA by default and will hang
-without it.
 
 ## What just happened
 
@@ -272,7 +237,7 @@ Four moving parts, one file each:
 | `data.py` | Generates the tasks. Four templates (csv sum, csv group-by-max, log count, log top-status), each with the golden answer computed at generation time. Endless, seeded, and **fully offline** -- there is no dataset to download. Train and validation draw from disjoint index ranges. |
 | `env.py` | The `bash` tool and a private scratch directory per rollout. Grades the workspace after every command. |
 | `rubric.py` | Turns those checks into a reward. |
-| `config_registry.py` | GRPO/DAPO hyperparameters and the GPU split. |
+| `config_registry.py` | GRPO/DAPO hyperparameters, the GPU split, and the rollout wiring: dataset + env + rubric + turn/token budget. |
 
 **Why `bash` and not a clean `run_python(code=...)` tool.** The bug being fixed
 lives in the shell boundary -- broken heredoc quoting. A tool that took code as a
@@ -292,14 +257,13 @@ right, and the fix wouldn't transfer to a real terminal-using agent.
 
 The tiers are not decoration. GRPO learns from *differences between rollouts of
 the same prompt*: if every attempt scores 0 because none fully succeeds, the group
-has no variance, the batch is discarded, and the model never gets a gradient. In
-early testing a bare 0/1 reward produced 12-18 consecutive discarded batches. The
+has no variance, the batch is discarded, and the model never gets a gradient. The
 tiers make a partially-competent attempt outrank a flailing one -- while keeping
 correctness strictly dominant, so partial credit can never beat a right answer.
 
 ## Make it yours
 
-**Make the tasks harder.** The shipped templates saturate in ~16 steps (see
+**Make the tasks harder.** The shipped templates saturate in about 15 steps (see
 above). For a longer run, add instances the model cannot solve in one command:
 multi-step aggregations, joins across columns, malformed rows that have to be
 handled, ambiguous schemas that need inspection first. A difficulty curriculum
@@ -313,73 +277,45 @@ the cheapest way to point the recipe at a task you care about.
 
 **Change what gets rewarded.** The tiers in `rubric.py` are config fields. Set
 `file_exists_credit=0.0` and `file_parses_credit=0.0` for a strict 0/1 reward, or
-raise `repeated_failing_command_penalty` to punish thrashing harder.
+raise `repeated_failing_command_penalty` to punish thrashing harder. The reward
+does not charge for extra turns, which is why trained rollouts often re-check a
+correct answer until the turn limit; lower `max_num_turns` to cap that.
 
-**Tune the rollout budget** in `rollouter.py`. If you widen `max_num_turns` or the
+**Tune the rollout budget** in `config_registry.py` (`_data_analyst_rollouter_config`). If you widen `max_num_turns` or the
 generator's `max_tokens`, raise `max_rollout_tokens` and the trainer's
 `max_context_length` to match -- a rollout that outgrows its budget is killed as
 `truncated_prompt_too_long`, and that silently looks like the model failing.
-
-## Pinning TorchTitan
-
-This recipe pins TorchTitan to commit `8108e201a`. That is not superstition --
-on commits after it, 30B Muse Glimmer RL does not fit on a single 8x95 GB node.
-
-TorchTitan [#4535](https://github.com/pytorch/torchtitan/pull/4535) (2026-09-13)
-made the fused gate-up projection the default and added a `state_dict` save hook
-that unflattens the fused `w13` parameter back into `w1`/`w3`. RL calls
-`state_dict()` on **every weight sync**, so at 30B that materializes a full-size
-extra copy of the projection every step. The trainer peaks at ~97 GB of a 95 GiB
-card and the next collective either OOMs or hangs until NCCL's watchdog aborts
-the run.
-
-This is not specific to this recipe. Upstream's own
-`rl_grpo_muse_glimmer_30b_search_r1` -- documented as running 100 steps on
-8x H100 -- fails the same way on current `main`, and runs clean at `8108e201a`:
-
-| Config | Commit | Result |
-|---|---|---|
-| stock `..._search_r1` | current `main` | OOM in `_split_w13_on_save` |
-| stock `..._search_r1` | `8108e201a` | 3/3 steps, trainer peak ~88 GB |
-| this recipe | current `main` | hang at step 2 |
-| this recipe | `8108e201a` | 10/10 steps, reward 0.20 -> 0.88 |
-
-`8108e201a` is the commit immediately before #4535, so it still includes
-[#4145](https://github.com/pytorch/torchtitan/pull/4145)'s Muse Glimmer renderer
-and everything else that landed in between.
-
-If you are reading this after the issue has been fixed or gated upstream, drop
-the pin and use `main`.
 
 ### Sizing, if you are adapting this
 
 Adam's fp32 `m`/`v` are allocated on the **first** `optimizer.step()`, so per-GPU
 memory jumps sharply between step 1 and step 2 -- a run that looks comfortable
-during step 1 can still die right after. Size for the post-step-1 number.
+during step 1 can still fail right after. Size for the post-step-1 number.
 
-The trainer's FSDP degree must divide the projection dimension 19968
-(= 2^9 x 3 x 13), so usable degrees are {1, 2, 3, 4, 6}. With the generator
-holding 2 GPUs, this recipe uses FSDP=3 x TP=2 across the remaining 6.
+This recipe uses trainer FSDP=3 x TP=2 on six GPUs and generator TP=2 on two
+(Muse Glimmer's 2 KV heads cap generator TP at 2). Headroom is thin: the busiest trainer GPU peaks at
+~93 GiB of 95 GiB, the rest at ~88-90 GiB.
+A longer context, a larger microbatch, or a bigger batch needs more GPUs.
 
 ## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| OOM in `_split_w13_on_save`, or a silent hang at step 2 ending in a NCCL watchdog abort | TorchTitan #4535's state-dict hook doubles the gate-up projection on every weight sync | Pin to `8108e201a` (see [Pinning TorchTitan](#pinning-torchtitan)) |
-| `vllm==0.2.5` tries to build from source, fails on CUDA version mismatch | Dependency resolution picked an old PyPI vLLM instead of the nightly wheel | Pin all four torch-family packages to the same explicit `.dev<date>+cu130` version, as in Setup step 2 |
-| Weight sync hangs; `CtranIb: Found 0 InfiniBand device(s)` | TorchStore defaults to an RDMA transport | `export USE_TORCHCOMMS_RDMA=0` before launching |
-| `Cannot unflatten unevenly sharded tensor` at startup | FSDP degree does not divide the projection dim 19968 | Use an FSDP degree in {1, 2, 3, 4, 6} |
+| `vllm==0.2.5` starts building from source and fails with a CUDA version mismatch | uv could not find matching nightly `torch` and `vllm` wheels, usually because `torchcomms` was included | Install `torch torchvision vllm` together without `torchcomms`, as in Setup step 2 |
+| `terminate called after throwing an instance of 'tvm::ffi::Error'` ... ``TypeAttr `__ffi_repr__` is already registered`` | Something installed after vLLM (for example `flash-attn-4`, or re-running `requirements.txt`) upgraded `apache-tvm-ffi` past the version vLLM needs | Re-run the last command of Setup step 2 so vLLM restores its dependencies |
+| OOM in `_split_w13_on_save` during weight sync | Your TorchTitan checkout is older than the fix for this | Pull the latest `main` |
+| Generator silent for a few minutes on the first run | FlashInfer is compiling its sampling kernels | Expected once; later runs use the cache |
+| `ModuleNotFoundError` for `grain`, `datasets`, `tyro`, `attn_gym`, or `torch_remat` | TorchTitan's own dependencies are missing | Run `uv pip install -r requirements.txt`, then re-run the last command of Setup step 2 |
 | `num_tokens_per_microbatch_per_dp_rank must be divisible by max_context_length` | The two are set independently | Make the microbatch budget a multiple of the context length |
 | Most rollouts end `truncated_prompt_too_long` | Per-turn generation budget x turns exceeds the rollout token budget | Shrink `sampling.max_tokens` / `max_num_turns`, or raise `max_rollout_tokens` and the context length together |
-| Repeated `Consecutive untrainable batches` warnings | Every rollout in the group scored identically, so GRPO has no signal | Use a graded reward (see above); check whether rollouts are being truncated before they can succeed |
-| `ModuleNotFoundError` for `grain`, `datasets`, `tyro`, `tensorboard`, `torch_remat` | Transitive TorchTitan deps not pulled by the RL requirements file | `uv pip install grain datasets tyro tensorboard torch-remat spmd_types torchdata` |
+| Repeated `Consecutive untrainable batches` warnings early in a run | Every rollout in a group scored the same, so GRPO has no signal | Use a graded reward (see above); check whether rollouts are truncated before they can succeed |
 
 ## Next steps
 
 - [`../../../../agentic-fundamentals/`](../../../../agentic-fundamentals/) -- the tool-use loop
   and ATEM tool-call format this recipe trains against.
-- [TitanRL docs](https://github.com/pytorch/torchtitan/tree/main/torchtitan/experiments/rl)
+- [TitanRL docs](https://github.com/pytorch/torchtitan/tree/main/torchtitan/rl)
   -- the framework: rollouters, environments, rubrics, and the async controller.
-- [`search_r1`](https://github.com/pytorch/torchtitan/tree/main/torchtitan/experiments/rl/examples/search_r1)
+- [`search_r1`](https://github.com/pytorch/torchtitan/tree/main/torchtitan/rl/examples/search_r1)
   -- the multi-turn retrieval recipe this one is modeled on, if your task needs an
   external tool service rather than a local sandbox.

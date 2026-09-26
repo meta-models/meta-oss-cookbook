@@ -17,4 +17,4 @@ configuration, rollout analysis, and reproducible implementation files.
 
 - [`../`](../) compares RL frameworks.
 - [`../../sft/`](../../sft/) contains supervised fine-tuning frameworks.
-- [TitanRL upstream](https://github.com/pytorch/torchtitan/tree/main/torchtitan/experiments/rl)
+- [TitanRL upstream](https://github.com/pytorch/torchtitan/tree/main/torchtitan/rl)

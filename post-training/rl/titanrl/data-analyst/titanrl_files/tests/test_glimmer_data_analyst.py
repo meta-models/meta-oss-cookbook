@@ -13,17 +13,17 @@ from pathlib import Path
 
 import pytest
 
-from torchtitan.experiments.rl.examples.glimmer_data_analyst.data import (
+from torchtitan.rl.examples.glimmer_data_analyst.data import (
     GlimmerDataAnalystDataset,
 )
-from torchtitan.experiments.rl.examples.glimmer_data_analyst.env import (
+from torchtitan.rl.examples.glimmer_data_analyst.env import (
     GlimmerDataAnalystEnv,
 )
-from torchtitan.experiments.rl.examples.glimmer_data_analyst.rubric import (
+from torchtitan.rl.examples.glimmer_data_analyst.rubric import (
     RewardCorrectArtifact,
 )
-from torchtitan.experiments.rl.rollout.types import Rollout, RolloutStatus, RolloutTurn
-from torchtitan.experiments.rl.types import RolloutTurnID
+from torchtitan.rl.rollout.types import Rollout, RolloutStatus, RolloutTurn
+from torchtitan.rl.types import RolloutTurnID
 
 
 def test_dataset_generates_verifiable_samples() -> None:

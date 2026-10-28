@@ -69,6 +69,13 @@ first user-directed response. It also adds Muse's `<|eot|>` token to the stop
 IDs, allowing private reasoning to finish while preventing repeated answer
 turns.
 
+The example below runs a new evaluation on the prepared validation file. To
+match archived inputs, compare `selected_ids_sha256` with the corresponding
+summary in `evaluations/`: the CoSyn digest is
+`105fc30b44296bc595ed98dc24b91bbbd04fdcc36afcd44a8db3ced33da7f538`.
+The same seed can select different IDs from different validation pools. Use
+`--ids-file` when reusing an explicit selection for base and tuned models.
+
 Example QLoRA invocation:
 
 ```bash

@@ -229,9 +229,11 @@ python scripts/prepare_dataset.py docmatix \
   --max-examples-per-split 16
 ```
 
-The script sorts normalized examples by stable ID before applying
-`--max-examples-per-split`, so capped outputs and their selected-ID digests are
-independent of source row order.
+With `--max-examples-per-split`, the script sorts source rows by stable ID
+before normalizing them. CoSyn QA pairs remain in source order; each output
+conversation counts toward the cap. The same ceiling applies to each split,
+without changing CoSyn's upstream train/validation assignment. See the
+[bounded CoSyn example](../README.md#run-a-bounded-cosyn-control) for 2,048/256.
 
 Character and image counts are always recorded. The commands at the top run an
 exact processor-level token check without loading model weights.

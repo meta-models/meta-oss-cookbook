@@ -1,4 +1,30 @@
+# Python-generated state and local environments.
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv*/
+venv/
+glimmer-rl*/
+glimmer-sft*/
+glimmer-axolotl*/
+
+# Generated training artifacts, including local post-training scratch copies.
+# Keep authored configs, tests, assets and compact result summaries visible.
+**/post-training/**/outputs/
+**/post-training/**/wandb/
+**/post-training/**/logs/
+**/post-training/**/.cache/
+**/post-training/**/checkpoints/
+**/post-training/**/checkpoint-*/
+**/post-training/**/example_checkpoint/
+**/post-training/**/data/cache/
+**/post-training/**/data/raw/
+**/post-training/**/data/smoke/
+**/post-training/**/data/preflight/
+**/post-training/**/data/prepared/*
+!**/post-training/**/data/prepared/.gitignore
+
+# Preserve the documented agent workspace placeholder, not its runtime files.
 muse-glimmer/agentic-fundamentals/workspace/*
 !muse-glimmer/agentic-fundamentals/workspace/.gitignore

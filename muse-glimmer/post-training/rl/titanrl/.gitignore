@@ -1,0 +1,32 @@
+# Local TorchTitan/dependency clones and named training environments.
+torchtitan/
+torchstore/
+batch_invariant_ops/
+.venv*/
+venv/
+glimmer-rl*/
+
+# Training outputs, tracking, logs and one-time model downloads.
+outputs/
+wandb/
+logs/
+.cache/
+checkpoints/
+checkpoint-*/
+example_checkpoint/
+*.safetensors
+pytorch_model*.bin
+adapter_model*.bin
+optimizer.pt
+scheduler.pt
+training_args.bin
+rng_state*.pth
+rollout_samples.jsonl
+console*.log
+train*.log
+run*.log
+slurm-*.out
+
+# Default standalone plot names, not authored documentation assets.
+/data-analyst/reward.png
+/data-analyst/outcomes.png

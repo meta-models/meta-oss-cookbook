@@ -1,0 +1,553 @@
+{
+  "scope": "Full-parameter Muse Glimmer30B local-current-source validation, using isolated clones, fresh uv environments and verified cached HF weights.",
+  "torchtitan_commit": "f5f3d29002779756cd6227680b4741672b4e9789",
+  "torchstore_commit": "16de81916f8a3aaf27c1803d8e630e335a734b1e",
+  "batch_invariant_ops_commit": "f22b1fbe534b1fe045080f44a970a441caaf3c4f",
+  "core_wheels": {
+    "torch": "2.16.0.dev20261029+cu132",
+    "torchvision": "0.30.0.dev20261029+cu132",
+    "vllm": "1.0.0.dev20261029+cu132",
+    "torchmonarch": "0.7.0",
+    "flash_attn_3": "3.0.1"
+  },
+  "hardware": "8x NVIDIA H100, 97871 MiB each",
+  "wandb_mode": "offline",
+  "scope_limits": [
+    "Not public-network bootstrap certification",
+    "No cloud W&B synchronization",
+    "Synthetic held-out examples, not general-task quality",
+    "GPU memory sampled, not exact maximum"
+  ],
+  "runs": {
+    "glimmer-smoke": {
+      "exit_code": 0,
+      "elapsed_s": 2525.907174966298,
+      "optimizer_step_metrics_from_console": [
+        {
+          "step": 1,
+          "mean_rollout_reward": 0.14,
+          "mean_loss": -0.18,
+          "mean_grad_norm": 6.58
+        },
+        {
+          "step": 2,
+          "mean_rollout_reward": 0.28,
+          "mean_loss": -0.24,
+          "mean_grad_norm": 6.0
+        },
+        {
+          "step": 3,
+          "mean_rollout_reward": 0.27,
+          "mean_loss": -0.2,
+          "mean_grad_norm": 6.43
+        },
+        {
+          "step": 4,
+          "mean_rollout_reward": 0.45,
+          "mean_loss": -0.2,
+          "mean_grad_norm": 6.33
+        },
+        {
+          "step": 5,
+          "mean_rollout_reward": 0.51,
+          "mean_loss": -0.3,
+          "mean_grad_norm": 5.56
+        },
+        {
+          "step": 6,
+          "mean_rollout_reward": 0.39,
+          "mean_loss": -0.31,
+          "mean_grad_norm": 6.7
+        },
+        {
+          "step": 7,
+          "mean_rollout_reward": 0.64,
+          "mean_loss": -0.23,
+          "mean_grad_norm": 5.24
+        },
+        {
+          "step": 8,
+          "mean_rollout_reward": 0.69,
+          "mean_loss": -0.34,
+          "mean_grad_norm": 6.28
+        },
+        {
+          "step": 9,
+          "mean_rollout_reward": 0.56,
+          "mean_loss": -0.3,
+          "mean_grad_norm": 4.57
+        },
+        {
+          "step": 10,
+          "mean_rollout_reward": 0.66,
+          "mean_loss": -0.27,
+          "mean_grad_norm": 6.7
+        }
+      ],
+      "sampled_peak_gpu_used_mib": {
+        "0": 94513.0,
+        "1": 89329.0,
+        "2": 89329.0,
+        "3": 89329.0,
+        "4": 89629.0,
+        "5": 89629.0,
+        "6": 92685.0,
+        "7": 92685.0
+      },
+      "memory_sampling_timeouts": 1,
+      "recorded_training_occurrences": 220,
+      "recorded_training_statuses": {
+        "truncated_length": 117,
+        "truncated_max_turns": 57,
+        "completed": 46
+      },
+      "initial_validation": {
+        "examples": 16,
+        "correct": 10,
+        "mean_reward": 0.63125,
+        "generator_policy_versions": [
+          0
+        ]
+      },
+      "final_validation": {
+        "examples": 16,
+        "correct": 14,
+        "mean_reward": 0.88125,
+        "generator_policy_versions": [
+          10
+        ]
+      },
+      "checkpoint": {
+        "step": 10,
+        "all_files_present": true,
+        "bytes": 334278293023
+      }
+    },
+    "glimmer-resume": {
+      "exit_code": 0,
+      "elapsed_s": 1336.625569860451,
+      "optimizer_step_metrics_from_console": [
+        {
+          "step": 11,
+          "mean_rollout_reward": 0.62,
+          "mean_loss": -0.19,
+          "mean_grad_norm": 6.67
+        }
+      ],
+      "sampled_peak_gpu_used_mib": {
+        "0": 92841.0,
+        "1": 96413.0,
+        "2": 96413.0,
+        "3": 96413.0,
+        "4": 96693.0,
+        "5": 96693.0,
+        "6": 92683.0,
+        "7": 92683.0
+      },
+      "memory_sampling_timeouts": 1,
+      "recorded_training_occurrences": 48,
+      "recorded_training_statuses": {
+        "truncated_length": 18,
+        "completed": 16,
+        "truncated_max_turns": 14
+      },
+      "initial_validation": {
+        "examples": 16,
+        "correct": 10,
+        "mean_reward": 0.6375,
+        "generator_policy_versions": [
+          10
+        ]
+      },
+      "final_validation": {
+        "examples": 16,
+        "correct": 14,
+        "mean_reward": 0.88125,
+        "generator_policy_versions": [
+          11
+        ]
+      },
+      "checkpoint": {
+        "step": 11,
+        "all_files_present": true,
+        "bytes": 334278290266
+      }
+    },
+    "glimmer-full": {
+      "exit_code": 1,
+      "elapsed_s": 6609.791835580021,
+      "optimizer_step_metrics_from_console": [
+        {
+          "step": 1,
+          "mean_rollout_reward": 0.22,
+          "mean_loss": -0.22,
+          "mean_grad_norm": 4.6
+        },
+        {
+          "step": 2,
+          "mean_rollout_reward": 0.29,
+          "mean_loss": -0.17,
+          "mean_grad_norm": 3.19
+        },
+        {
+          "step": 3,
+          "mean_rollout_reward": 0.51,
+          "mean_loss": -0.21,
+          "mean_grad_norm": 3.36
+        },
+        {
+          "step": 4,
+          "mean_rollout_reward": 0.41,
+          "mean_loss": -0.25,
+          "mean_grad_norm": 4.46
+        },
+        {
+          "step": 5,
+          "mean_rollout_reward": 0.64,
+          "mean_loss": -0.069,
+          "mean_grad_norm": 3.93
+        },
+        {
+          "step": 6,
+          "mean_rollout_reward": 0.59,
+          "mean_loss": -0.078,
+          "mean_grad_norm": 3.26
+        },
+        {
+          "step": 7,
+          "mean_rollout_reward": 0.79,
+          "mean_loss": -0.085,
+          "mean_grad_norm": 3.024
+        },
+        {
+          "step": 8,
+          "mean_rollout_reward": 0.81,
+          "mean_loss": -0.087,
+          "mean_grad_norm": 5.66
+        },
+        {
+          "step": 9,
+          "mean_rollout_reward": 0.79,
+          "mean_loss": -0.093,
+          "mean_grad_norm": 2.66
+        },
+        {
+          "step": 10,
+          "mean_rollout_reward": 0.9,
+          "mean_loss": -0.11,
+          "mean_grad_norm": 2.42
+        },
+        {
+          "step": 11,
+          "mean_rollout_reward": 0.89,
+          "mean_loss": -0.056,
+          "mean_grad_norm": 2.62
+        },
+        {
+          "step": 12,
+          "mean_rollout_reward": 0.87,
+          "mean_loss": -0.027,
+          "mean_grad_norm": 2.83
+        },
+        {
+          "step": 13,
+          "mean_rollout_reward": 0.89,
+          "mean_loss": -0.035,
+          "mean_grad_norm": 2.55
+        },
+        {
+          "step": 14,
+          "mean_rollout_reward": 0.93,
+          "mean_loss": -0.062,
+          "mean_grad_norm": 2.034
+        },
+        {
+          "step": 15,
+          "mean_rollout_reward": 0.96,
+          "mean_loss": -0.021,
+          "mean_grad_norm": 2.27
+        },
+        {
+          "step": 16,
+          "mean_rollout_reward": 0.98,
+          "mean_loss": -0.087,
+          "mean_grad_norm": 2.29
+        },
+        {
+          "step": 17,
+          "mean_rollout_reward": 0.99,
+          "mean_loss": -0.018,
+          "mean_grad_norm": 2.87
+        },
+        {
+          "step": 18,
+          "mean_rollout_reward": 1.0,
+          "mean_loss": 0.11,
+          "mean_grad_norm": 3.032
+        }
+      ],
+      "sampled_peak_gpu_used_mib": {
+        "0": 93601.0,
+        "1": 89211.0,
+        "2": 89211.0,
+        "3": 89211.0,
+        "4": 89511.0,
+        "5": 89511.0,
+        "6": 92545.0,
+        "7": 92545.0
+      },
+      "memory_sampling_timeouts": 0,
+      "recorded_training_occurrences": 6208,
+      "recorded_training_statuses": {
+        "truncated_length": 275,
+        "truncated_max_turns": 1753,
+        "completed": 4180
+      },
+      "initial_validation": {
+        "examples": 64,
+        "correct": 27,
+        "mean_reward": 0.43515625,
+        "generator_policy_versions": [
+          0
+        ]
+      }
+    },
+    "glimmer-bounded-full": {
+      "exit_code": 0,
+      "elapsed_s": 3903.1170368380845,
+      "optimizer_step_metrics_from_console": [
+        {
+          "step": 1,
+          "mean_rollout_reward": 0.24,
+          "mean_loss": -0.19,
+          "mean_grad_norm": 4.61
+        },
+        {
+          "step": 2,
+          "mean_rollout_reward": 0.31,
+          "mean_loss": -0.19,
+          "mean_grad_norm": 2.89
+        },
+        {
+          "step": 3,
+          "mean_rollout_reward": 0.45,
+          "mean_loss": -0.23,
+          "mean_grad_norm": 4.16
+        },
+        {
+          "step": 4,
+          "mean_rollout_reward": 0.51,
+          "mean_loss": -0.19,
+          "mean_grad_norm": 2.92
+        },
+        {
+          "step": 5,
+          "mean_rollout_reward": 0.56,
+          "mean_loss": -0.18,
+          "mean_grad_norm": 2.98
+        },
+        {
+          "step": 6,
+          "mean_rollout_reward": 0.64,
+          "mean_loss": -0.17,
+          "mean_grad_norm": 2.98
+        },
+        {
+          "step": 7,
+          "mean_rollout_reward": 0.73,
+          "mean_loss": -0.19,
+          "mean_grad_norm": 2.87
+        },
+        {
+          "step": 8,
+          "mean_rollout_reward": 0.64,
+          "mean_loss": -0.14,
+          "mean_grad_norm": 3.41
+        },
+        {
+          "step": 9,
+          "mean_rollout_reward": 0.73,
+          "mean_loss": -0.052,
+          "mean_grad_norm": 2.44
+        },
+        {
+          "step": 10,
+          "mean_rollout_reward": 0.85,
+          "mean_loss": -0.098,
+          "mean_grad_norm": 2.15
+        },
+        {
+          "step": 11,
+          "mean_rollout_reward": 0.87,
+          "mean_loss": -0.067,
+          "mean_grad_norm": 3.29
+        },
+        {
+          "step": 12,
+          "mean_rollout_reward": 0.94,
+          "mean_loss": -0.063,
+          "mean_grad_norm": 2.45
+        },
+        {
+          "step": 13,
+          "mean_rollout_reward": 0.95,
+          "mean_loss": -0.022,
+          "mean_grad_norm": 2.41
+        },
+        {
+          "step": 14,
+          "mean_rollout_reward": 0.97,
+          "mean_loss": 0.011,
+          "mean_grad_norm": 3.24
+        },
+        {
+          "step": 15,
+          "mean_rollout_reward": 0.98,
+          "mean_loss": 0.012,
+          "mean_grad_norm": 2.82
+        }
+      ],
+      "sampled_peak_gpu_used_mib": {
+        "0": 94549.0,
+        "1": 89365.0,
+        "2": 89365.0,
+        "3": 89365.0,
+        "4": 89665.0,
+        "5": 89665.0,
+        "6": 92545.0,
+        "7": 92545.0
+      },
+      "memory_sampling_timeouts": 1,
+      "recorded_training_occurrences": 2440,
+      "recorded_training_statuses": {
+        "truncated_length": 274,
+        "completed": 1569,
+        "truncated_max_turns": 597
+      },
+      "initial_validation": {
+        "examples": 64,
+        "correct": 26,
+        "mean_reward": 0.41875,
+        "generator_policy_versions": [
+          0
+        ]
+      },
+      "final_validation": {
+        "examples": 64,
+        "correct": 64,
+        "mean_reward": 1.0,
+        "generator_policy_versions": [
+          15
+        ]
+      },
+      "checkpoint": {
+        "step": 15,
+        "all_files_present": true,
+        "bytes": 334278298862
+      }
+    }
+  },
+  "original_200_update_failure": "Upstream no-trainable-sample guard at18 updates, exit1; no final checkpoint/post-validation. Full default changed to15, without changing reward or filtering.",
+  "cpu_verification": {
+    "exit_code": 0,
+    "elapsed_s": 33.540966000407934,
+    "tests": 70,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "passed": 70
+  },
+  "checkpoint_resume_state": {
+    "before": {
+      "train_state": {
+        "train_state.step": 10,
+        "train_state.ntokens_seen": 122880
+      },
+      "optimizer_step_values": [
+        10.0
+      ],
+      "optimizer_state_entries": 1413,
+      "controller_keys": [
+        "dataloader"
+      ],
+      "controller": {},
+      "dataloader": {
+        "version": 1,
+        "dataset": {
+          "cursor": 55,
+          "next_index": 55
+        },
+        "next_index": 55
+      },
+      "pending_sample_ids": [
+        50,
+        51,
+        53,
+        54
+      ],
+      "lr_scheduler": 10
+    },
+    "after": {
+      "train_state": {
+        "train_state.step": 11,
+        "train_state.ntokens_seen": 135168
+      },
+      "optimizer_step_values": [
+        11.0
+      ],
+      "optimizer_state_entries": 1413,
+      "controller_keys": [
+        "dataloader"
+      ],
+      "controller": {},
+      "dataloader": {
+        "version": 1,
+        "dataset": {
+          "cursor": 60,
+          "next_index": 60
+        },
+        "next_index": 60
+      },
+      "pending_sample_ids": [
+        53,
+        57,
+        58,
+        59
+      ],
+      "lr_scheduler": 11
+    }
+  },
+  "full_checkpoint_state": {
+    "train_state": {
+      "train_state.step": 15,
+      "train_state.ntokens_seen": 638976
+    },
+    "optimizer_step_values": [
+      15.0
+    ],
+    "optimizer_state_entries": 1413,
+    "controller_keys": [
+      "dataloader"
+    ],
+    "controller": {},
+    "dataloader": {
+      "version": 1,
+      "dataset": {
+        "cursor": 274,
+        "next_index": 274
+      },
+      "next_index": 274
+    },
+    "pending_sample_ids": [
+      265,
+      266,
+      267,
+      269,
+      270,
+      271,
+      272,
+      273
+    ],
+    "lr_scheduler": 15
+  }
+}

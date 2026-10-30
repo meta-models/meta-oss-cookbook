@@ -1,8 +1,36 @@
-.venv/
+# Local Python environments and caches.
+.venv*/
+venv/
+glimmer-sft*/
+glimmer-axolotl*/
+.pytest_cache/
+.ruff_cache/
+__pycache__/
+.cache/
+
+# Generated datasets and training/evaluation outputs.
 outputs/
+checkpoints/
+checkpoint-*/
 data/cache/
+data/raw/
 data/preflight/
 data/smoke/
 wandb/
-.pytest_cache/
-__pycache__/
+logs/
+
+# Weight/state files and runtime logs outside the standard output directory.
+*.safetensors
+pytorch_model*.bin
+adapter_model*.bin
+optimizer.pt
+scheduler.pt
+training_args.bin
+rng_state*.pth
+console*.log
+train*.log
+run*.log
+slurm-*.out
+
+# Prepared data is ignored by data/prepared/.gitignore. Keep assets/, configs/,
+# scripts/, tests/ and the reviewed compact results/ JSON files trackable.

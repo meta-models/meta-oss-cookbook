@@ -10,8 +10,8 @@ and serving implementations disagree.
 |---|---|
 | [`data-analyst/`](data-analyst/) | Deterministic CSV and log analysis with GRPO |
 
-The data-analyst recipe includes a measured baseline, reward design, training
-configuration, rollout analysis, and reproducible implementation files.
+The data-analyst recipe includes reward design, current upstream configuration,
+CPU factory tests, rollout inspection, and reproducible implementation files.
 
 ## Related paths
 

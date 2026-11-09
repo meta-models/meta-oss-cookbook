@@ -22,7 +22,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Literal
 
-from torchtitan.config import Configurable
+from torchtitan.rl.rollout.data import RLDataset
 
 OUTPUT_FILENAME = "answer.json"
 """Filename every task asks the model to write its answer to, as ``{"answer": <number>}``."""
@@ -104,7 +104,9 @@ def _make_csv_sum_task(rng: random.Random, index: int) -> GlimmerDataAnalystSamp
     )
 
 
-def _make_csv_groupby_max_task(rng: random.Random, index: int) -> GlimmerDataAnalystSample:
+def _make_csv_groupby_max_task(
+    rng: random.Random, index: int
+) -> GlimmerDataAnalystSample:
     """A pension table; question = the highest average value across regions."""
     num_rows = rng.randint(8, 16)
     sums: dict[str, float] = {r: 0.0 for r in _CSV_REGIONS}
@@ -174,7 +176,9 @@ def _make_log_count_task(rng: random.Random, index: int) -> GlimmerDataAnalystSa
     )
 
 
-def _make_log_top_status_task(rng: random.Random, index: int) -> GlimmerDataAnalystSample:
+def _make_log_top_status_task(
+    rng: random.Random, index: int
+) -> GlimmerDataAnalystSample:
     """A synthetic access log; question = how many lines have the most common HTTP
     status code (the count, not the code itself, so the answer stays a single number
     even when two codes tie for most common)."""
@@ -217,7 +221,7 @@ _TEMPLATES = [
 ]
 
 
-class GlimmerDataAnalystDataset(Configurable):
+class GlimmerDataAnalystDataset(RLDataset):
     """Endless, seeded stream of synthetic csv/log data-analysis tasks.
 
     Fully offline and self-contained: every sample's data file and golden answer are
@@ -227,7 +231,7 @@ class GlimmerDataAnalystDataset(Configurable):
     """
 
     @dataclass(kw_only=True, slots=True)
-    class Config(Configurable.Config):
+    class Config(RLDataset.Config):
         seed: int = 42
         """Seed for both the per-template RNG and the round-robin template order."""
 

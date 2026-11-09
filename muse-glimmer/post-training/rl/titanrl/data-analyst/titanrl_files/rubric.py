@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from torchtitan.rl.rollout import Rollout
-from torchtitan.rl.rubric import RewardFn
+from torchtitan.rl.rollout.rubric import RewardFn
 
 
 def _last_graded_env_rewards(rollout: Rollout) -> dict[str, float]:
@@ -74,9 +74,7 @@ class RewardCorrectArtifact(RewardFn):
         self._file_parses_credit = config.file_parses_credit
         self._file_exists_credit = config.file_exists_credit
         self._ran_ok_credit = config.ran_ok_credit
-        self._repeated_failing_command_penalty = (
-            config.repeated_failing_command_penalty
-        )
+        self._repeated_failing_command_penalty = config.repeated_failing_command_penalty
 
     async def __call__(self, rollout: Rollout, env_input: object) -> float:
         env_rewards = _last_graded_env_rewards(rollout)

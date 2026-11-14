@@ -71,6 +71,8 @@ you need:
   Adapt Muse Glimmer with QLoRA, LoRA, or full-parameter training.
 - **[Data-analyst RL with TitanRL](muse-glimmer/post-training/rl/titanrl/data-analyst/):**
   Train tool-using behavior with a machine-checkable reward.
+- **[Data-analyst RL with TRL](muse-glimmer/post-training/rl/trl/data-analyst/):**
+  Train LoRA adapters with GRPO and a `bash` tool to read messy CSV and log files correctly.
 
 ## What to expect
 

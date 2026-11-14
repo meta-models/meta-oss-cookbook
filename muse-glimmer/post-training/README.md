@@ -16,6 +16,7 @@ added without mixing their setup, configs, or results.
 |---|---|---|
 | Supervised fine-tuning | Axolotl | [`sft/axolotl/`](sft/axolotl/) |
 | Reinforcement learning | TitanRL | [`rl/titanrl/data-analyst/`](rl/titanrl/data-analyst/) |
+| Reinforcement learning | TRL | [`rl/trl/data-analyst/`](rl/trl/data-analyst/) |
 
 The objective indexes compare frameworks and reserve named locations for future
 implementations such as LLaMA-Factory or Unsloth. Framework directories own
@@ -111,3 +112,5 @@ Each recipe's banner states only hardware it was actually verified on.
   and ATEM tool-call format that the TitanRL data-analyst recipe builds on.
 - [`rl/titanrl/data-analyst/`](rl/titanrl/data-analyst/) -- the measured RL
   recipe, if you want to train behavior with a deterministic reward.
+- [`rl/trl/data-analyst/`](rl/trl/data-analyst/) -- the same kind of task with
+  TRL's `GRPOTrainer` and LoRA on three GPUs.

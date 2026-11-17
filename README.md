@@ -69,6 +69,9 @@ you need:
   Enforce a response schema and explore the cost of different reasoning budgets.
 - **[Supervised fine-tuning with Axolotl](muse-glimmer/post-training/sft/axolotl/):**
   Adapt Muse Glimmer with QLoRA, LoRA, or full-parameter training.
+- **[Supervised fine-tuning with TRL](muse-glimmer/post-training/sft/trl/):**
+  Fine-tune Muse Glimmer on circuit-diagram questions with QLoRA and score it
+  before and after training.
 - **[Data-analyst RL with TitanRL](muse-glimmer/post-training/rl/titanrl/data-analyst/):**
   Train tool-using behavior with a machine-checkable reward.
 - **[Data-analyst RL with TRL](muse-glimmer/post-training/rl/trl/data-analyst/):**

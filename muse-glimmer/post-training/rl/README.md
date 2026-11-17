@@ -9,10 +9,13 @@ success is cheap and objective to verify.
 | Framework | Status | Recipes |
 |---|---|---|
 | TitanRL | Available and measured | [`titanrl/`](titanrl/) |
+| TRL | Available and measured | [`trl/data-analyst/`](trl/data-analyst/) |
 | Unsloth | Planned | Add under `unsloth/` when implemented |
 
-TitanRL currently provides the data-analyst recipe, which trains tool-using
-behavior against deterministic CSV and log-analysis checks.
+Both available frameworks provide a data-analyst recipe that trains tool-using
+behavior against deterministic CSV and log-analysis checks. TitanRL trains all
+parameters with its in-process vLLM generator. TRL trains LoRA adapters with
+`GRPOTrainer`, a vLLM server and harder task files.
 
 ## Before choosing RL
 

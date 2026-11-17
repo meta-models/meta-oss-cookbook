@@ -9,12 +9,17 @@ then follow that framework's setup, data, training, and evaluation workflow.
 | Framework | Status | Recipe |
 |---|---|---|
 | Axolotl | Available and measured | [`axolotl/`](axolotl/) |
+| TRL | Available and measured | [`trl/`](trl/) |
 | LLaMA-Factory | Planned | Add under `llama-factory/` when implemented |
 | Unsloth | Planned | Add under `unsloth/` when implemented |
 
 The Axolotl recipe covers text-only, single-image, and true multi-image data. It
 includes QLoRA, bf16 LoRA with FSDP2, and full-parameter bf16 FSDP2 on one 8x
 H100 node, with W&B histories, held-out evaluation, and reproducible plots.
+
+The TRL recipe trains QLoRA adapters with `SFTTrainer` on the same CoSyn circuit
+data as the Axolotl QLoRA run, on one 8x H100 node. It scores the base model and
+the adapter on all 821 held-out questions in the same run.
 
 ## Choose a framework
 

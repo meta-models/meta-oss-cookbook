@@ -1,6 +1,6 @@
 ---
 vendor: Oracle Cloud Infrastructure
-contact: Federico Kamelhar (<contact-email>)
+contact: Federico Kamelhar (github.com/fede-kamel)
 updated: 2026-11-17
 ---
 
@@ -22,9 +22,9 @@ Oracle Cloud Infrastructure (OCI) offers Arm-based Ampere A1 flexible compute in
 | Platform | Precision | TTFT p50 | Output tok/s | pp512 tok/s | tg128 tok/s |
 |---|---|---|---|---|---|
 | VM.Standard.A1.Flex, 16 OCPU | q4_k_m | 4583 ms | 5.8 | 18.5 | 5.7 |
-| VM.Standard.A1.Flex, 4 OCPU (Always Free) | q4_k_m | Not measured yet. | Not measured yet. | Not measured yet. | Not measured yet. |
+| VM.Standard.A1.Flex, 4 OCPU (Always Free) | q4_k_m | 17159 ms | 2.0 | 4.7 | 2.0 |
 
-Measured on 2026-11-17 with llama.cpp `1.0.0-dev` (commit `ad9d9e8`, GCC 13.3.0, CPU backend) on Ubuntu 24.04.5 LTS, kernel `7.0.0-1013-oracle`, at 1 concurrent request. TTFT and Output tok/s come from five streamed `/v1/chat/completions` calls with ~120 input / 128 output tokens, `temperature 0`, `reasoning_strength: low`, and a **distinct prompt per run** so the server's prefix cache is never hit (identical prompts report ~1 s TTFT, which is the cache, not the model). pp512 / tg128 are `llama-bench` with 3 repetitions. Reproduce with:
+Measured on 2026-11-17 with llama.cpp `1.0.0-dev` (commit `ad9d9e8`, GCC 13.3.0, CPU backend) on Ubuntu 24.04.5 LTS, kernel `7.0.0-1013-oracle`, at 1 concurrent request. TTFT and Output tok/s come from five streamed `/v1/chat/completions` calls with ~120 input / 128 output tokens, `temperature 0`, `reasoning_strength: low`, and a **distinct prompt per run** so the server's prefix cache is never hit (identical prompts report ~1 s TTFT, which is the cache, not the model). pp512 / tg128 are `llama-bench` with 3 repetitions. Model load before the first request took ~35 s on 16 OCPU and ~4 min 20 s on 4 OCPU. The 4 OCPU TTFT figure is the median of runs 2-5 plus a first run of 28 s. Reproduce with:
 
 ```bash
 ./build/bin/llama-bench -m ~/models/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf -p 512 -n 128 -t 16 -r 3
@@ -116,7 +116,7 @@ One row per precision that's relevant, including the ones that don't work.
 | Host OS tested | Ubuntu 24.04.5 LTS (aarch64), kernel 7.0.0-1013-oracle |
 | Driver / runtime | llama.cpp 1.0.0-dev, commit ad9d9e8, GCC 13.3.0, CPU backend |
 | Model server | llama-server |
-| Verified by | Pending |
+| Verified by | Federico Kamelhar on 2026-11-17 |
 
 **Prerequisites**
 
@@ -143,11 +143,13 @@ Same build as above. Keep the context small enough for 24 GB of RAM:
 
 | Precision | Status | Artifact | Memory observed | Notes |
 |---|---|---|---|---|
-| q4_k_m | Planned | `meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M` (15.6 GiB) | | Measurement in progress. |
+| q4_k_m | Verified | `meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M` (15.6 GiB) | 20.7 GB RSS with `-c 32768 -np 1` | Tool calling round-tripped. Model load takes ~4 min on 4 cores. |
 
 **Troubleshooting**
 
-Nothing reported yet.
+| Symptom | Cause | Fix |
+|---|---|---|
+| `/v1/chat/completions` returns HTTP 503 `Loading model` for several minutes after start | Reading the 15.6 GiB checkpoint on 4 cores with cold page cache takes longer than on the 16 OCPU shape | Poll `/health` until it returns `{"status":"ok"}` before sending traffic; don't treat the first 503s as a failure. |
 
 ## Support
 
@@ -155,4 +157,4 @@ Where a reader takes a problem with these platforms — your issue tracker, foru
 
 - Issues: https://github.com/ggml-org/llama.cpp/issues (runtime) and https://github.com/oracle-quickstart/oci-ai-blueprints/issues (OCI deployment)
 - Docs: https://docs.oracle.com/en-us/iaas/Content/Compute/References/computeshapes.htm
-- Maintainer: Federico Kamelhar (<contact-email>)
+- Maintainer: Federico Kamelhar (github.com/fede-kamel)

@@ -16,7 +16,7 @@ Oracle Cloud Infrastructure (OCI) offers Arm-based Ampere A1 flexible compute in
 |---|---|---|---|---|
 | VM.Standard.A1.Flex, 16 OCPU | cloud-instance | N/A (Ampere Altra, Arm Neoverse-N1 CPU) | 96 GB | q4_k_m |
 | VM.Standard.A1.Flex, 4 OCPU (Always Free) | cloud-instance | N/A (Ampere Altra, Arm Neoverse-N1 CPU) | 24 GB | q4_k_m |
-| VM.GPU.A10.2 (NVIDIA A10) | cloud-instance | NVIDIA A10 × 2 | 24 GB GDDR6 per GPU | q4_k_m |
+| VM.GPU.A10.2 (NVIDIA A10) | cloud-instance | NVIDIA A10 × 2 | 24 GB GDDR6 per GPU | q4_k_m, fp8 |
 
 ## Performance
 
@@ -24,9 +24,10 @@ Oracle Cloud Infrastructure (OCI) offers Arm-based Ampere A1 flexible compute in
 |---|---|---|---|---|---|
 | VM.Standard.A1.Flex, 16 OCPU | q4_k_m | 4583 ms | 5.8 | 18.5 | 5.7 |
 | VM.Standard.A1.Flex, 4 OCPU (Always Free) | q4_k_m | 17159 ms | 2.0 | 4.7 | 2.0 |
-| VM.GPU.A10.2 (NVIDIA A10), 1 GPU | q4_k_m | 315 ms | 27.3 | Not measured yet. | Not measured yet. |
+| VM.GPU.A10.2 (NVIDIA A10), 1 GPU, llama.cpp | q4_k_m | 315 ms | 27.3 | 1071 | 26.9 |
+| VM.GPU.A10.2 (NVIDIA A10), 2 GPUs, vLLM TP=2 | fp8 | 178 ms | 31.1 | — | — |
 
-A1 rows measured on 2026-11-17 with llama.cpp `1.0.0-dev` (commit `ad9d9e8`, GCC 13.3.0, CPU backend) on Ubuntu 24.04.5 LTS, kernel `7.0.0-1013-oracle`; the A10 row with the upstream `ghcr.io/ggml-org/llama.cpp:server-cuda` image (build 12464, commit `d3c3e242c`) on Oracle Linux 9.8, driver 615.71.09, one of the two A10s, `-ngl 99 -c 131072`. All at 1 concurrent request. TTFT and Output tok/s come from five streamed `/v1/chat/completions` calls with ~120 input / 128 output tokens, `temperature 0`, `reasoning_strength: low`, and a **distinct prompt per run** so the server's prefix cache is never hit (identical prompts report ~1 s TTFT, which is the cache, not the model). pp512 / tg128 are `llama-bench` with 3 repetitions. Model load before the first request took ~35 s on 16 OCPU and ~4 min 20 s on 4 OCPU. The 4 OCPU TTFT figure is the median of runs 2-5 plus a first run of 28 s. Reproduce with:
+A1 rows measured on 2026-11-17 with llama.cpp `1.0.0-dev` (commit `ad9d9e8`, GCC 13.3.0, CPU backend) on Ubuntu 24.04.5 LTS, kernel `7.0.0-1013-oracle`; the A10 llama.cpp row with the upstream `ghcr.io/ggml-org/llama.cpp:server-cuda` image (build 12464, commit `d3c3e242c`) on Oracle Linux 9.8, driver 615.71.09, one of the two A10s, `-ngl 99 -c 131072` (pp512 / tg128 from `llama-bench` in the `full-cuda` image); the A10 vLLM row with `vllm/vllm-openai:v0.34.0`, `RedHatAI/Muse-Glimmer-30B-FP8-block`, TP=2, text-only, 16k context, fp8 KV cache. All at 1 concurrent request. Under load, `vllm bench serve` (random 2048 in / 256 out) on the vLLM config gave 27 tok/s output at concurrency 1 (TTFT 1.1 s, TPOT 33 ms) and 128 tok/s aggregate at concurrency 8 (TTFT 5.1 s, TPOT 43 ms). TTFT and Output tok/s come from five streamed `/v1/chat/completions` calls with ~120 input / 128 output tokens, `temperature 0`, `reasoning_strength: low`, and a **distinct prompt per run** so the server's prefix cache is never hit (identical prompts report ~1 s TTFT, which is the cache, not the model). pp512 / tg128 are `llama-bench` with 3 repetitions. Model load before the first request took ~35 s on 16 OCPU and ~4 min 20 s on 4 OCPU. The 4 OCPU TTFT figure is the median of runs 2-5 plus a first run of 28 s. Reproduce with:
 
 ```bash
 ./build/bin/llama-bench -m ~/models/Muse-Glimmer-30B-KQuant-17GB-Q4_K_M.gguf -p 512 -n 128 -t 16 -r 3
@@ -191,14 +192,26 @@ sudo docker run -d --name llamacpp --gpus '"device=0"' -p 127.0.0.1:8080:8080 \
   -a muse-glimmer -ngl 99 -c 131072 -np 1 --jinja --host 0.0.0.0 --port 8080
 ```
 
-The GGUF files come from `meta-models/Muse-Glimmer-30B-GGUF`. The server answers `/health` about 5 s after start. Confirm the deploy with the tool-calling check in [`../inference-server/vllm.md`](../inference-server/vllm.md); on this platform it returned `get_weather(city="Paris", units="celsius")` with `finish_reason: tool_calls`.
+The GGUF files come from `meta-models/Muse-Glimmer-30B-GGUF`. The server answers `/health` about 5 s after start.
+
+For vLLM on both GPUs, the bf16 checkpoint does not fit, so serve the FP8 block-quantized checkpoint text-only with a bounded context (the vision encoder and a 32k context leave no room for KV cache on 24 GB cards):
+
+```bash
+sudo docker run -d --name vllm --gpus all --ipc=host -p 127.0.0.1:8000:8000 \
+  -v $HOME/models:/models vllm/vllm-openai:v0.34.0 \
+  /models/Muse-Glimmer-30B-FP8-block --served-model-name muse-glimmer --tensor-parallel-size 2 \
+  --max-model-len 16384 --max-num-seqs 16 --limit-mm-per-prompt '{"image":0}' --kv-cache-dtype fp8 \
+  --generation-config auto --enable-auto-tool-choice --tool-call-parser muse_glimmer --reasoning-parser muse_glimmer
+```
+
+vLLM reports about 2.8 GiB of KV cache per GPU with this configuration and answers `/health` after roughly 160 s (weights load plus CUDA graph capture). Ampere has no FP8 tensor cores, so vLLM runs the FP8 weights through its weight-only path; it still beat the single-GPU llama.cpp run on both TTFT and decode here. Confirm the deploy with the tool-calling check in [`../inference-server/vllm.md`](../inference-server/vllm.md); on this platform it returned `get_weather(city="Paris", units="celsius")` with `finish_reason: tool_calls`.
 
 **Supported precisions**
 
 | Precision | Status | Artifact | Memory observed | Notes |
 |---|---|---|---|---|
 | q4_k_m | Verified | `meta-models/Muse-Glimmer-30B-GGUF:Q4_K_M` (15.6 GiB) | 19.2 GB VRAM on one A10 with `-c 131072 -np 1` | Tool calling round-tripped. |
-| fp8 | Planned | `RedHatAI/Muse-Glimmer-30B-FP8-block` via vLLM, TP=2 | | First attempt left no room for KV cache at 32k context with the vision encoder loaded; retry in progress. |
+| fp8 | Verified | `RedHatAI/Muse-Glimmer-30B-FP8-block` via vLLM v0.34.0, TP=2 | 20.0 GB VRAM per GPU with `--max-model-len 16384`, fp8 KV | Tool calling round-tripped. Text-only (`--limit-mm-per-prompt '{"image":0}'`); with the vision encoder loaded and a 32k context the engine has no KV cache left and fails to start. |
 | bf16 | Not supported | `meta-models/Muse-Glimmer-30B` | | 60 GB of weights do not fit two 24 GB A10s. Use BM.GPU.A10.4 (TP=4) or an H100/H200 shape. |
 
 **Troubleshooting**
@@ -207,6 +220,7 @@ The GGUF files come from `meta-models/Muse-Glimmer-30B-GGUF`. The server answers
 |---|---|---|
 | `docker pull` or the weight download fails with "no space left" soon after boot | The Gen2-GPU image's root LV is ~30 GB | `sudo /usr/libexec/oci-growfs -y` before pulling anything. |
 | `permission denied ... docker.sock` in scripts run over `ssh host 'cmd'` | Non-login shells don't pick up the new `docker` group | Use `sudo docker`, or log out and in. |
+| vLLM FP8 TP=2 exits with `EngineCore failed to start` after graph capture | ~18 GiB per GPU consumed by weights + vision encoder, 0 KV cache left at 32k context | Add `--limit-mm-per-prompt '{"image":0}' --max-model-len 16384 --kv-cache-dtype fp8`. |
 
 ## Support
 

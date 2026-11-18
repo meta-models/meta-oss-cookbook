@@ -72,6 +72,9 @@ you need:
 - **[Supervised fine-tuning with TRL](muse-glimmer/post-training/sft/trl/):**
   Fine-tune Muse Glimmer on circuit-diagram questions with QLoRA and score it
   before and after training.
+- **[Supervised fine-tuning with Unsloth](muse-glimmer/post-training/sft/unsloth/):**
+  Fine-tune Muse Glimmer on circuit-diagram questions with QLoRA on one GPU and
+  score it before and after training.
 - **[Data-analyst RL with TitanRL](muse-glimmer/post-training/rl/titanrl/data-analyst/):**
   Train tool-using behavior with a machine-checkable reward.
 - **[Data-analyst RL with TRL](muse-glimmer/post-training/rl/trl/data-analyst/):**

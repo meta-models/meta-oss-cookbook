@@ -24,6 +24,7 @@ glimmer-axolotl*/
 **/post-training/**/data/preflight/
 **/post-training/**/data/prepared/*
 !**/post-training/**/data/prepared/.gitignore
+**/unsloth_compiled_cache/
 
 # Preserve the documented agent workspace placeholder, not its runtime files.
 muse-glimmer/agentic-fundamentals/workspace/*

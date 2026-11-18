@@ -130,6 +130,13 @@ def test_loss_covers_only_the_recipient_answer_and_end_of_turn(collator, process
         assert trained == f" to=user<|message|>{example['target']}<|eot|>"
 
 
+def test_rows_that_would_be_truncated_are_rejected(train_module, collator):
+    rows = [data.to_conversation(ex) for ex in data.build_examples([row("a", ["Two"])])]
+    (length,) = train_module.sequence_lengths(collator, rows, max_length=1024)
+    with pytest.raises(ValueError, match="would be truncated"):
+        train_module.sequence_lengths(collator, rows, max_length=length)
+
+
 def test_images_keep_their_letterboxed_size(collator, processor):
     example = data.build_examples([row("a", ["Two"])])[0]
     batch = collator([data.to_conversation(example)])

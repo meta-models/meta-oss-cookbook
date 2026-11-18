@@ -125,7 +125,23 @@ def compare(base: dict, tuned: dict) -> dict:
     }
 
 
-def training_summary(trainer: SFTTrainer, collator, rows: list[dict]) -> dict:
+def sequence_lengths(collator, rows: list[dict], max_length: int) -> list[int]:
+    """Tokens per row (image, prompt and answer). Stops if a row would be truncated.
+
+    The collator truncates rows to max_length, which would cut image tokens or
+    the answer and its <|eot|>.
+    """
+    lengths = [int(collator([row])["attention_mask"].sum()) for row in rows]
+    too_long = sum(length >= max_length for length in lengths)
+    if too_long:
+        raise ValueError(
+            f"{too_long} of {len(rows)} examples reach max_length={max_length} and "
+            "would be truncated; raise max_length above the longest example"
+        )
+    return lengths
+
+
+def training_summary(trainer: SFTTrainer, tokens_per_epoch: int) -> dict:
     """Token throughput and allocator peaks for the training loop.
 
     Tokens are every token in the training sequences (image, prompt and
@@ -135,7 +151,6 @@ def training_summary(trainer: SFTTrainer, collator, rows: list[dict]) -> dict:
     train_log = next(row for row in reversed(history) if "train_runtime" in row)
     eval_seconds = sum(row["eval_runtime"] for row in history if "eval_runtime" in row)
     train_seconds = train_log["train_runtime"] - eval_seconds
-    tokens_per_epoch = sum(int(collator([row])["attention_mask"].sum()) for row in rows)
     num_tokens = tokens_per_epoch * trainer.state.epoch
     return {
         "gpus": 1,
@@ -213,14 +228,17 @@ def main() -> None:
     train_rows = [
         data.to_conversation(ex) for ex in data.load_split("train", recipe.train_size)
     ]
+    validation_rows = [
+        data.to_conversation(ex)
+        for ex in data.load_split("validation", recipe.validation_size)
+    ]
+    train_tokens = sum(sequence_lengths(collator, train_rows, args.max_length))
+    sequence_lengths(collator, validation_rows, args.max_length)
     trainer = SFTTrainer(
         model=model,
         args=args,
         train_dataset=train_rows,
-        eval_dataset=[
-            data.to_conversation(ex)
-            for ex in data.load_split("validation", recipe.validation_size)
-        ],
+        eval_dataset=validation_rows,
         processing_class=processor.tokenizer,
         data_collator=collator,
     )
@@ -237,8 +255,11 @@ def main() -> None:
     torch.cuda.empty_cache()  # measure training memory without the test pass's cache
     torch.cuda.reset_peak_memory_stats()
     trainer.train()
-    training = training_summary(trainer, collator, train_rows)
+    training = training_summary(trainer, train_tokens)
     trainer.save_model(args.output_dir)
+    # The processor and chat template too, so the adapter directory reloads
+    # with the official template even without tokenizer_name.
+    processor.save_pretrained(args.output_dir)
     trainer.state.save_to_json(os.path.join(args.output_dir, "trainer_state.json"))
 
     FastModel.for_inference(model)

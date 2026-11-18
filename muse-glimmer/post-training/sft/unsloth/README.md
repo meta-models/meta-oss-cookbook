@@ -58,8 +58,9 @@ python train.py --config config.yaml
 
 The run scores the base model on all 821 held-out test questions, trains for
 one epoch (64 updates) with a validation loss every 16 updates, saves the
-adapter to `outputs/muse-glimmer-cosyn-unsloth`, and scores the adapter on the
-same questions. Both scores, the differences with confidence intervals, and the
+adapter with the processor and chat template to
+`outputs/muse-glimmer-cosyn-unsloth`, and scores the adapter on the same
+questions. Both scores, the differences with confidence intervals, and the
 throughput and memory measurements are written to `test_results.json`. It takes
 about 75 minutes on one H100: about 42 to load the model and score the base
 model, which reasons before it answers, 26 to train and 5 to score the adapter.
@@ -106,7 +107,9 @@ an upload of `meta-models/Muse-Glimmer-30B` with the language model in NF4
 22 GB download instead of 60 GB. The processor and
 chat template come from `meta-models/Muse-Glimmer-30B` (`tokenizer_name` in
 `config.yaml`): the template in Unsloth's upload adds `Reasoning strength:
-high.` even when the system message sets it.
+high.` even when the system message sets it. `train.py` saves this processor
+next to the adapter, so loading the adapter directory with `FastModel` uses the
+same template.
 
 **Data.** Each CoSyn circuit image is a rendered diagram with six or seven
 questions on average. `data.py` makes one example per question, with the
@@ -291,6 +294,9 @@ instead of per token.
   `data.to_conversation`, with every message's content as a list of typed parts
   (`{"type": "text", ...}` or `{"type": "image"}`). Keep one system prompt for
   training and evaluation, and write a scorer for your answers in `data.score`.
+  Keep `max_length` above your longest example: the collator would truncate
+  longer rows, cutting image tokens or the answer, so `train.py` stops before
+  training if any row reaches it.
 - **Decide about reasoning:** the targets here contain no private reasoning, so
   the trained model answers without it. Check your hardest questions before
   making the same choice.
@@ -327,6 +333,7 @@ instead of per token.
 | `num_items_in_batch could not be counted` | Unsloth notice for this model class | Harmless: each example's loss is averaged first |
 | The trained model answers in the `to=self` channel and scores zero | The loss starts after `to=user<\|message\|>`, so the recipient is never trained | Start it at `<\|start\|>assistant`, as `RESPONSE_PART` in `train.py` does |
 | Many base answers cut off | The base model reasons privately before answering | Raise `max_new_tokens`; cut-off answers score zero |
+| `examples reach max_length`, or `Mismatch in image token count` | An example is longer than `max_length`, and the collator would truncate it | Raise `max_length` |
 | CUDA out of memory in a test pass | Generation batch too large for the GPU | Lower `generation_batch_size` |
 | A re-scored adapter gives slightly different generations | Greedy decoding in this software stack is not bit-for-bit repeatable, with or without Unsloth | Compare scores, not individual generations |
 | W&B `CommError` | No network path to the W&B server | `export WANDB_MODE=offline`, then `wandb sync` later |

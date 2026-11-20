@@ -10,12 +10,12 @@ Serve Muse Glimmer with native tool calling and stream it to your whole team. Th
 Docker is the supported path.
 
 ```bash
-docker pull vllm/vllm-openai:muse-glimmer
+docker pull vllm/vllm-openai:v0.28.0
 ```
 
-`pip install vllm` will **not** serve this model. Muse Glimmer support in vLLM is still an open, unmerged pull request ([vllm-project/vllm#51655](https://github.com/vllm-project/vllm/pull/51655)), so the model code and the `muse_glimmer` parsers are absent from every released wheel. The official recipe sets `pip: false` for exactly this reason. The image is how you get the unreleased code.
+Muse Glimmer support landed upstream in [vllm-project/vllm#51655](https://github.com/vllm-project/vllm/pull/51655) (merged 2026-08-14) and ships in every release from **v0.28.0** (2026-08-26): the model code and the `muse_glimmer` tool-call and reasoning parsers are in the released wheels, so `pip install "vllm>=0.28.0"` also serves this model. The [official recipe](https://recipes.vllm.ai/meta-models/Muse-Glimmer-30B) requires vLLM >= 0.28.0 and pins `vllm/vllm-openai:v0.28.0`; any later release tag works. The earlier `vllm/vllm-openai:muse-glimmer` preview tag predates the merge and is no longer needed.
 
-The image is ~10.5 GB and publishes `linux/amd64` and `linux/arm64`. The recipe pins it for CUDA 13.0 (`docker_image.nvidia.cu130`). There is no published ROCm image — on ROCm, build from PR #51655.
+The recipe's `docker_image.nvidia.cu130` entry is the CUDA 13.0 build. There is no published ROCm image — on ROCm, build vLLM >= 0.28.0 from source.
 
 What the image gives you for Muse Glimmer:
 

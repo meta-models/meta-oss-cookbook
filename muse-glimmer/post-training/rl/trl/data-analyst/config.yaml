@@ -1,0 +1,56 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the BSD-style license found in the
+# LICENSE file in the root directory of this source tree.
+
+# Model and LoRA: BF16 frozen base, LoRA on the text decoder only.
+model_name_or_path: meta-models/Muse-Glimmer-30B
+model_init_kwargs:
+  dtype: bfloat16
+lora_r: 16
+lora_alpha: 32
+
+# Tasks: generated offline from disjoint index ranges.
+train_size: 4096
+validation_size: 96
+test_size: 256
+
+# Reward: the environment's tiered reward (weight 1, added by TRL). The
+# accuracy and answered functions are logged with weight 0.
+reward_weights: [0.0, 0.0]
+
+# Rollouts: one bash tool, unfiltered sampling at temperature 1 (as in TitanRL).
+num_generations: 8
+max_completion_length: 4096          # all assistant and tool tokens of one rollout
+max_tool_calling_iterations: 12
+temperature: 1.0
+chat_template_kwargs:
+  reasoning_strength: low
+use_vllm: true
+vllm_mode: server
+
+# Optimization: 8 prompts x 8 rollouts per update on one trainer GPU.
+learning_rate: 2.0e-5
+lr_scheduler_type: constant_with_warmup
+warmup_steps: 5
+max_steps: 40
+per_device_train_batch_size: 2
+gradient_accumulation_steps: 32
+bf16: true
+
+# Evaluation: 2 rollouts per task; validation curve every 20 updates from step 0.
+eval_strategy: steps
+eval_steps: 20
+eval_on_start: true
+per_device_eval_batch_size: 16
+num_generations_eval: 2
+
+# Logging and checkpoints.
+output_dir: outputs/muse-glimmer-data-analyst
+run_name: muse-glimmer-data-analyst
+report_to: wandb
+logging_steps: 1
+save_strategy: steps
+save_steps: 20
+seed: 42

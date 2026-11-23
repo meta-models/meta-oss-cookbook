@@ -7,7 +7,7 @@ license = "Apache-2.0"
 dependencies = [
   "huggingface-hub>=1.1,<2",
   "torch==2.13.0",
-  "transformers==5.0.0rc1",
+  "transformers==5.10.1",
 ]
 
 [tool.uv.workspace]

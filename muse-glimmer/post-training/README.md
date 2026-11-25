@@ -15,6 +15,7 @@ added without mixing their setup, configs, or results.
 | Objective | Available framework | Recipe |
 |---|---|---|
 | Supervised fine-tuning | Axolotl | [`sft/axolotl/`](sft/axolotl/) |
+| Supervised fine-tuning | TRL | [`sft/trl/`](sft/trl/) |
 | Reinforcement learning | TitanRL | [`rl/titanrl/data-analyst/`](rl/titanrl/data-analyst/) |
 | Reinforcement learning | TRL | [`rl/trl/data-analyst/`](rl/trl/data-analyst/) |
 

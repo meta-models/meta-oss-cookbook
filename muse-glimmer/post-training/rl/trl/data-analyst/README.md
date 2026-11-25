@@ -159,11 +159,23 @@ without `--adapter_path` scores the base model.
 
 ## How the task and reward work
 
-Each rollout gets a private temporary workspace containing one input file and
-a question whose answer is a single number. The model may call `bash` up to 12
-times. TRL calls `reset` with the dataset row, exposes `bash` as the only tool,
-masks tool output out of the loss, and scores the finished rollout with
-`get_reward`.
+This directory contains no data files. `orders.csv`, `access.log` and
+`answer.json` exist only inside each rollout's temporary workspace:
+
+1. TRL calls `reset` with one dataset row. `env.py` creates a fresh workspace
+   and writes that task's input file (`orders.csv` or `access.log`) into it.
+2. The model reads the question and may call `bash`, the only tool, up to 12
+   times. TRL masks tool output out of the loss.
+3. The model must create `answer.json` itself with a `bash` command.
+4. When the rollout ends, TRL calls `get_reward`, which grades `answer.json`
+   against the golden number computed when the task was generated. The
+   workspace is deleted on the next `reset`.
+
+To print one task's prompt and input file:
+
+```bash
+python -c 'from env import make_task; t = make_task("validation", 9); print(t["prompt"][0]["content"]); print(t["input_content"])'
+```
 
 | Template | File | What trips a naive one-liner |
 |---|---|---|
@@ -187,6 +199,79 @@ zero-weight rewards.
 
 Train, validation and test tasks come from disjoint index ranges, so no test
 file is ever seen in training.
+
+### Example: one task before and after training
+
+Validation task `category_revenue_1000009` asks for the total revenue of the
+`toys` category. The golden answer is 5216.21. The first rows of its generated
+`orders.csv`:
+
+```csv
+order_id,product,category,quantity,unit_price
+5000,Toaster,kitchen,12,82.77
+5001,"Board game ""Castles""",toys,11,149.08
+5002,"Planter, 30"" round",garden,11,120.92
+5003,Yo-yo,toys,4,65.84
+```
+
+Seven of the twelve `toys` rows have a comma inside the quoted product name.
+Below are two rollouts sampled with the recipe's prompt, environment and
+sampling settings. `[model]` lines shorten the model's reasoning; commands and
+rewards are verbatim, and long tool output is cut where marked.
+
+**Base model, reward 0.45.** It splits rows on commas without looking at the
+file:
+
+```text
+[model] Let's do one command: compute sum and write file.
+[bash]  awk -F, 'NR>1 &&tolower($3)=="toys"{sum+=$4*$5} END{printf "%.2f\n", sum}' orders.csv | awk '{print "{\"answer\": " $1 "}"}' > /dev/null; # test
+[tool]  [no output]
+[model] We need to actually write file.
+[bash]  awk -F, 'NR>1 && tolower($3)=="toys" {sum+=$4*$5} END {printf "{\"answer\": %.2f}\n", sum}' orders.csv > answer.json && cat answer.json
+[tool]  {"answer": 2658.08}
+```
+
+On rows with a quoted comma, `$3` is not the category, so those rows are
+skipped. `answer.json` is well-formed but wrong: 0.05 (a command ran) + 0.15
+(the file exists) + 0.25 (the file parses) = 0.45.
+
+**Trained model (seed 1234), reward 1.0.** It looks at the data first, notices
+the quoting and switches to a CSV parser:
+
+```text
+[model] Let's first see file.
+[bash]  head -n 20 orders.csv
+[tool]  order_id,product,category,quantity,unit_price
+        5000,Toaster,kitchen,12,82.77
+        5001,"Board game ""Castles""",toys,11,149.08
+        5002,"Planter, 30"" round",garden,11,120.92
+        ... (16 more rows)
+[model] Product may contain comma, quoted. That complicates simple split by
+        comma. Better use Python with csv module to parse correctly.
+[bash]  python3 - << 'PY'
+        import csv, json
+        total = 0.0
+        with open('orders.csv', newline='') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row['category'].strip().lower() == 'toys':
+                    qty = float(row['quantity'])
+                    price = float(row['unit_price'])
+                    total += qty * price
+        total = round(total + 1e-9, 2)  # avoid floating issues
+        with open('answer.json', 'w') as out:
+            json.dump({"answer": total}, out)
+        print(total)
+        PY
+[tool]  5216.21
+[model] It printed 5216.21. Let's verify file written.
+[bash]  cat answer.json
+[tool]  {"answer": 5216.21}
+```
+
+`answer.json` holds the golden number, so the reward is 1.0. Across four
+samples of this task, the base model was correct once and the trained model
+four times.
 
 ## Training setup
 

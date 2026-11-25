@@ -33,6 +33,7 @@ import signal
 import subprocess
 import sys
 import tempfile
+import weakref
 from pathlib import Path
 
 from datasets import Dataset
@@ -188,11 +189,14 @@ class DataAnalystEnv:
     ``reset`` and ``get_reward`` as a tool, so ``bash`` is the only tool."""
 
     def __init__(self) -> None:
-        self._workdir: Path | None = None
+        self._remove_workdir: weakref.finalize | None = None
 
     def reset(self, input_filename: str, input_content: str, golden_value: float, tolerance: float, **_) -> None:
-        self._remove_workdir()
+        if self._remove_workdir is not None:
+            self._remove_workdir()
         self._workdir = Path(tempfile.mkdtemp(prefix="glimmer_data_analyst_"))
+        # Deletes the workspace on the next reset, when the env is collected, or at interpreter exit.
+        self._remove_workdir = weakref.finalize(self, shutil.rmtree, self._workdir, ignore_errors=True)
         (self._workdir / input_filename).write_text(input_content)
         self._golden_value = golden_value
         self._tolerance = tolerance
@@ -261,13 +265,6 @@ class DataAnalystEnv:
         except (OSError, ValueError, TypeError, KeyError, OverflowError):
             return "malformed"
         return "correct" if abs(value - self._golden_value) <= self._tolerance else "wrong"
-
-    def _remove_workdir(self) -> None:
-        if self._workdir is not None:
-            shutil.rmtree(self._workdir, ignore_errors=True)
-
-    def __del__(self) -> None:
-        self._remove_workdir()
 
 
 def accuracy(environments: list[DataAnalystEnv], **kwargs) -> list[float]:
